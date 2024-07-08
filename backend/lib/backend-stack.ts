@@ -15,11 +15,11 @@ export class BackendStack extends cdk.Stack {
     super(scope, id, props);
 
     // Existing S3 bucket declaration
-    const fovusSubmissionFilesBucket = new s3.Bucket(this, "fovusSubmissionFiles", {
+    const bucket = new s3.Bucket(this, "fovusSubmissionFiles", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    fovusSubmissionFilesBucket.addCorsRule({
+    bucket.addCorsRule({
       allowedMethods: [s3.HttpMethods.PUT, s3.HttpMethods.GET],
       allowedOrigins: ["*"],
       allowedHeaders: ["*"],
@@ -47,7 +47,7 @@ export class BackendStack extends cdk.Stack {
           path.join(__dirname, "../lambda/generateSignedS3Url")
         ),
         environment: {
-          UploadBucket: fovusSubmissionFilesBucket.bucketName,
+          UploadBucket: bucket.bucketName,
         },
         role: getSignedS3UrlRole,
       }
@@ -140,17 +140,17 @@ export class BackendStack extends cdk.Stack {
     fovusSubmissionsTable.grantReadWriteData(manageSubmissionsTableLambda);
 
     // Create an API Gateway REST API
-    const manageSubmissionsTableAPI = new apigateway.RestApi(
+    const manageFovusSubmissionsTableAPI = new apigateway.RestApi(
       this,
-      "manageSubmissionsTableAPI",
+      "manageFovusSubmissionsTableAPI",
       {
-        restApiName: "manageSubmissionsTableAPI",
+        restApiName: "manageFovusSubmissionsTableAPI",
         description: "To manage Fovus submissions table",
       }
     );
 
     const submissionsRootResource =
-    manageSubmissionsTableAPI.root.addResource("fovusSubmissions");
+      manageFovusSubmissionsTableAPI.root.addResource("fovusSubmissions");
     submissionsRootResource.addMethod(
       "PUT",
       new apigateway.LambdaIntegration(manageSubmissionsTableLambda)
@@ -221,21 +221,21 @@ export class BackendStack extends cdk.Stack {
       sources: [
         s3deploy.Source.asset(path.join(__dirname, "../assets/script/deploy")),
       ],
-      destinationBucket: fovusSubmissionFilesBucket,
+      destinationBucket: bucket,
     });
 
     new cdk.CfnOutput(this, "DynamoDBAPIEndpoint", {
-      value: manageSubmissionsTableAPI.url,
+      value: manageFovusSubmissionsTableAPI.url,
       description: "Endpoint for the Fovus submissions table API",
     });
 
     new cdk.CfnOutput(this, "S3APIEndpoint", {
       value: generateSignedS3UrlAPI.url,
-      description: "Endpoint for the Fovus submission files S3 bucket API",
+      description: "Endpoint for the Fovus submission file S3 bucket API",
     });
 
     new cdk.CfnOutput(this, "BucketName", {
-      value: fovusSubmissionFilesBucket.bucketName,
+      value: bucket.bucketName,
       description: "The name of the S3 bucket for Fovus submission files",
     });
   }
