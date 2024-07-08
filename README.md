@@ -1,5 +1,9 @@
 # fovus-coding-challenge
 
+## Amplify Deployment Link
+https://main.d1p4du9gsoojvb.amplifyapp.com/
+
+
 ## Frontend Setup
 
 ***Note:** Make sure you have Node.js installed, we will be using `npm`*
@@ -24,7 +28,7 @@
 
 ## Backend Setup
 
-**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS with the account you intend to deploy the CDK to*
+**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS with the account you intend to deploy the CDK to
 
 - Navigate to the backend directory
   
