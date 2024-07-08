@@ -144,5 +144,27 @@ The `generateSignedS3UrlAPI` is attached to a lambda function named `generateSig
 The `manageSubmissionsTableAPI` is attached to a lambda function named `manageSubmissionsTableLambda` which is designed to manage submissions within a database table named `FovusSubmissionsTable`. This API allows operations such as creating new submissions, retrieving submission details, updating existing submissions.
 
 
+## How to download output file
+
+You can use the `generateSignedS3UrlAPI` to obtain a signed URL for downloading files from an S3 bucket. Here's how you can do it using Postman:
+
+- **Endpoint**: `https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/uploads`
+- **Method**: `GET`
+- **Parameters**:
+  - `type`: `"download"`
+  - `key`: Specify the filename/key of the file you want to download from S3
+  - 
+### Usage Example 
+In Postman or your preferred HTTP client, set up a GET request to the following endpoint
+
+`https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/uploads?type=download&key=output_h3Z3OxX5I6pG2NhabayP7~tester.txt`
+
+Replace `output_h3Z3OxX5I6pG2NhabayP7~tester.txt` with the actual filename/key of the file you want to download from your S3 bucket.
+
+### Note
+
+Simply open the signed URL in your browser to initiate the download of the specified file from S3. Ensure that you have appropriate permissions and that the `key` parameter matches an existing file in your S3 bucket.
+
+
 
 
