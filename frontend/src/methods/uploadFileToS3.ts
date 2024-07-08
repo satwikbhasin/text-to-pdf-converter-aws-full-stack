@@ -41,10 +41,8 @@ const uploadFileToS3 = async (
 
       const urlParts = new URL(uploadUrl);
       // URL format is https://backendstack-bucketName.s3.amazonaws.com/...
-      // Bucket name = first removing 'backendstack-' prefix and then splitting by '.s3.amazonaws.com'
-      const bucketName = urlParts.hostname
-        .replace("backendstack-", "")
-        .split(".s3.amazonaws.com")[0];
+      // Bucket name = first string after splitting by '.s3.amazonaws.com'
+      const bucketName = urlParts.hostname.split(".s3.amazonaws.com")[0];
 
       const s3ObjectKey = uploadUrl.split("?")[0].split("/").pop();
       const s3Path = `${bucketName}/${s3ObjectKey}`;
