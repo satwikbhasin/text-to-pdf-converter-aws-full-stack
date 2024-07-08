@@ -2,7 +2,7 @@
 
 ## Frontend Setup
 
-***Note:** Make sure you have Node.js installed, we will be using **npm***
+***Note:** Make sure you have Node.js installed, we will be using `npm`*
 
 - Navigate to the frontend directory
   
@@ -32,11 +32,12 @@
    cd backend
    ```
    
-- Deploy the stack to CDK using my custom script named **deploy.sh**
+- Deploy the stack to CDK using my custom script named ***deploy.sh***
   
   ```sh
   ./deploy.ch
   ```
+  For more details on how ***deploy.sh*** works and its configuration, refer to the script explanation below.
 
 ## **deploy.sh** Script Explanation
 
@@ -76,7 +77,7 @@ bucket_name=$(aws cloudformation describe-stacks \
 ```
 
 #### Update Local Scripts
-Update script.py with API endpoints and bucket name
+Update ***script.py*** with necessary ***generateSignedS3UrlAPI***, ***manageSubmissionsTableAPI*** API endpoints and ***fovusSubmissionFilesBucket*** bucket name
 
 ```bash
 script_template="assets/script/template/script.py"
@@ -85,7 +86,7 @@ sed -e "s|<DYNAMODB_API_ENDPOINT>|${dynamodb_api_endpoint//\//\\/}|g; s|<S3_API_
 ```
 
 #### Update Lambda Function
-Update **createVm_and_runScript.js** Lambda function with the ***S3 SIGNED URL GENERATOR API*** endpoint
+Update **createVm_and_runScript.js** Lambda function with the ***generateSignedS3UrlAPI*** endpoint
 
 ```bash
 createVm_and_runScript_lambda_template="lambda/createVm_and_runScript/template/createVm_and_runScript.js"
@@ -100,3 +101,44 @@ Completes the deployment process for BackendStack, ensuring all configurations a
 ```bash
 cdk deploy
 ```
+
+## **script.py** Script Explanation
+
+### Overview
+
+This script executes within an EC2 instance triggered by events with entryType **"input"** in DynamoDB
+
+- Retrieves submission details from DynamoDB
+- Modifies and uploads files to S3
+- Updates DynamoDB with file paths and submission details
+
+### Functions
+
+- **`get_from_dynamodb_using_submission_id(submission_id)`**: Retrieves submission details from DynamoDB and downloads files from S3
+  
+- **`modify_input_file(inputText, input_file_path)`**: Modifies input files and renames them as requested
+
+- **`upload_to_s3(file_path)`**: Uploads files to S3 using signed URLs obtained from an API
+
+- **`write_to_dynamodb(s3_path, submission_id, inputText)`**: Writes submission details back to DynamoDB
+
+### Execution
+
+The script reads a `submissionId` from a file, processes the submission through the defined functions, and updates DynamoDB with the results
+
+### Note
+The **entryType** attribute with a value of **"input"** in DynamoDB ensures that the EC2 instance is launched only when a user submits a file, not when the script itself performs operations. Conversely, when the script submits data, it marks the entry with **"output"** as the **entryType**. This differentiation clarifies that the EC2 instance is triggered specifically in response to user submissions, distinguishing it from automated script actions and avoiding an infinite loop.
+
+## API's
+
+## `generateSignedS3UrlAPI` 
+
+The `generateSignedS3UrlAPI` is attached to a lambda function named `generateSignedS3Url` which generates signed URLs for secure access to objects stored in an Amazon S3 bucket. These URLs grant temporary, controlled access to specified resources without exposing AWS credentials.    
+
+## `manageSubmissionsTableAPI`
+
+The `manageSubmissionsTableAPI` is attached to a lambda function named `manageSubmissionsTableLambda` which is designed to manage submissions within a database table named `FovusSubmissionsTable`. This API allows operations such as creating new submissions, retrieving submission details, updating existing submissions.
+
+
+
+
