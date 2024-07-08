@@ -28,7 +28,7 @@ https://main.d1p4du9gsoojvb.amplifyapp.com/
 
 ## Backend Setup
 
-**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS with the account you intend to deploy the CDK to
+**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS CLI using the root user account you intend to deploy the CDK to
 
 - Navigate to the backend directory
   
