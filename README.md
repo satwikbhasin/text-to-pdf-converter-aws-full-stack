@@ -165,6 +165,27 @@ Replace `output_h3Z3OxX5I6pG2NhabayP7~tester.txt` with the actual filename/key o
 
 Simply open the signed URL in your browser to initiate the download of the specified file from S3. Ensure that you have appropriate permissions and that the `key` parameter matches an existing file in your S3 bucket.
 
+## Requirements Checklist
+
+### Basic
+
+- [x] AWS CDK for Managing AWS Infrastructure
+- [x] AWS SDK Javascript V3 for Lambda
+- [x] Followed AWS best practices
+- [x] No SSH or hard-coded parameters
+- [x] Files in S3 are not public
+- [x] No AWS Amplify backend or frontend resource in code
+- [x] Creating a new VM after user submissions to DB
+- [x] Professional code and a reader-friendly README file
+- [x] Confirm availability of backup and rollback procedures.
+- [x] Finished all basic requirements
+
+### Bonus
+
+- [x] Frontend hosted on Amplify
+- [X] Used Flowbite TailwindCSS and ReactJS for Responsive UI
+
+
 
 
 
