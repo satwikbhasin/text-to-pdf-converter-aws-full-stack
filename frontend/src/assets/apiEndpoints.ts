@@ -1,0 +1,2 @@
+export const GENERATE_SIGNED_URL_API = "https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/";
+export const MANAGE_FOVUS_SUBMISSIONS_TABLE_API = "https://oy6u4dmwhl.execute-api.us-east-1.amazonaws.com/prod/";
