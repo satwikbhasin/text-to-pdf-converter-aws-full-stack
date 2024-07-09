@@ -17,7 +17,7 @@ exports.handler = async (event) => {
                 const submissionId = tableEntry.id.S;
                 const entryType = tableEntry.entryType.S;
 
-                var S3SignAPI = "https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/";
+                var S3SignAPI = "https://2a9vriqi8d.execute-api.us-east-1.amazonaws.com/prod/";
                 
                 if (entryType == "input") {
 
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
         cd /home/ec2-user/
         echo '${submissionId}' > submissionId.txt
         
-        SIGNED_URL_API="${S3SignAPI}uploads?type=download&key=script.py"
+        SIGNED_URL_API="${S3SignAPI}?type=download&key=script.py"
         response=$(curl -s $SIGNED_URL_API)
         
         download_url=$(echo $response | jq -r '.downloadURL')

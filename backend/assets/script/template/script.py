@@ -8,12 +8,12 @@ import json
 # Global variables for API endpoints
 dynamodb = f"<DYNAMODB_API_ENDPOINT>"
 s3 = f"<S3_API_ENDPOINT>"
-bucket_name_from_cdk = "<BUCKET_NAME>"
+bucket_name_from_cdk = f"<BUCKET_NAME>"
 
 def get_from_dynamodb_using_submission_id(submission_id):
     try:
         
-        dynamoDB_URL = f"{dynamodb}fovusSubmissions/{submission_id}"
+        dynamoDB_URL = f"{dynamodb}/{submission_id}"
         response = requests.get(dynamoDB_URL)
 
         if response.status_code != 200:
@@ -27,7 +27,7 @@ def get_from_dynamodb_using_submission_id(submission_id):
         s3_key = s3Path.split('/', 1)[-1]
 
         # API endpoint to get the signed URL for file download
-        GetS3SignedURL = f"{s3}uploads"
+        GetS3SignedURL = f"{s3}"
         params = {
             "type": "download",
             "key": s3_key
@@ -80,7 +80,7 @@ def modify_input_file(inputText, input_file_path):
 def upload_to_s3(file_path):
     # Get the signed URL from the API
     try:
-        url = f"{s3}uploads?fileName={file_path}"
+        url = f"{s3}?fileName={file_path}"
         response = requests.get(url)
         signed_url = response.json().get("uploadURL")
     except Exception as e:
@@ -113,7 +113,7 @@ def upload_to_s3(file_path):
 
 
 def write_to_dynamodb(s3_path, submission_id, inputText):
-    url = f'{dynamodb}fovusSubmissions'
+    url = f'{dynamodb}'
     payload = {
         "id": submission_id,
         "text": inputText,

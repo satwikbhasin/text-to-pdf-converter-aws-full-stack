@@ -1,8 +1,7 @@
-# fovus-coding-challenge
+# aws-full-stack-demo-app
 
 ## Amplify Deployment Link
 https://main.d1p4du9gsoojvb.amplifyapp.com/
-
 
 ## Frontend Setup
 
@@ -39,7 +38,7 @@ https://main.d1p4du9gsoojvb.amplifyapp.com/
 - Deploy the stack to CDK using my custom script named ***deploy.sh***
   
   ```sh
-  ./deploy.ch
+  ./deploy.sh
   ```
   For more details on how ***deploy.sh*** works and its configuration, refer to the script explanation below.
 
@@ -81,7 +80,7 @@ bucket_name=$(aws cloudformation describe-stacks \
 ```
 
 #### Update Local Scripts
-Update ***script.py*** with necessary ***generateSignedS3UrlAPI***, ***manageSubmissionsTableAPI*** API endpoints and ***fovusSubmissionFilesBucket*** bucket name
+Update ***script.py*** with necessary ***generateSignedS3UrlAPI***, ***manageUserSubmissionsTableApi*** API endpoints and ***user-files*** bucket name
 
 ```bash
 script_template="assets/script/template/script.py"
@@ -135,13 +134,13 @@ The **entryType** attribute with a value of **"input"** in DynamoDB ensures that
 
 ## API's
 
-## `generateSignedS3UrlAPI` 
+## `generateSignedS3UrlApi` 
 
-The `generateSignedS3UrlAPI` is attached to a lambda function named `generateSignedS3Url` which generates signed URLs for secure access to objects stored in an Amazon S3 bucket. These URLs grant temporary, controlled access to specified resources without exposing AWS credentials.    
+The `generateSignedS3UrlApi` is attached to a lambda function named `generateSignedS3Url` which generates signed URLs for secure access to objects stored in an Amazon S3 bucket. These URLs grant temporary, controlled access to specified resources without exposing AWS credentials.    
 
-## `manageSubmissionsTableAPI`
+## `manageUserSubmissionsTableApi`
 
-The `manageSubmissionsTableAPI` is attached to a lambda function named `manageSubmissionsTableLambda` which is designed to manage submissions within a database table named `FovusSubmissionsTable`. This API allows operations such as creating new submissions, retrieving submission details, updating existing submissions.
+The `manageUserSubmissionsTableApi` is attached to a lambda function named `manageUserSubmissionsTable` which is designed to manage submissions within a database table named `userSubmissionsTable`. This API allows operations such as creating new submissions, retrieving submission details, updating existing submissions.
 
 
 ## How to download output file
@@ -164,27 +163,6 @@ Replace `output_h3Z3OxX5I6pG2NhabayP7~tester.txt` with the actual filename/key o
 ### Note
 
 Simply open the signed URL in your browser to initiate the download of the specified file from S3. Ensure that you have appropriate permissions and that the `key` parameter matches an existing file in your S3 bucket.
-
-## Requirements Checklist
-
-### Basic
-
-- [x] AWS CDK for Managing AWS Infrastructure
-- [x] AWS SDK Javascript V3 for Lambda
-- [x] Followed AWS best practices
-- [x] No SSH or hard-coded parameters
-- [x] Files in S3 are not public
-- [x] No AWS Amplify backend or frontend resource in code
-- [x] Creating a new VM after user submissions to DB
-- [x] Professional code and a reader-friendly README file
-- [x] Confirm availability of backup and rollback procedures.
-- [x] Finished all basic requirements
-
-### Bonus
-
-- [x] Frontend hosted on Amplify
-- [X] Used Flowbite TailwindCSS and ReactJS for Responsive UI
-
 
 
 

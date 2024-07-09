@@ -1,5 +1,4 @@
-import { GENERATE_SIGNED_URL_API } from "../assets/apiEndpoints";
-const API_ENDPOINT = GENERATE_SIGNED_URL_API + "/uploads";
+import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
 
 const uploadFileToS3 = async (
   selectedFile: File | null,
@@ -9,7 +8,7 @@ const uploadFileToS3 = async (
 ): Promise<string | null> => {
   try {
     if (selectedFile) {
-      const getS3SignedUrl = `${API_ENDPOINT}?fileName=${encodeURIComponent(
+      const getS3SignedUrl = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?fileName=${encodeURIComponent(
         "input_" + nanoId + "~" + selectedFile.name
       )}&fileType=${selectedFileType}`;
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
-import { MANAGE_FOVUS_SUBMISSIONS_TABLE_API } from '../assets/apiEndpoints';
+import { MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT } from '../assets/apiEndpoints';
 
 import validationErrors from './messages/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
@@ -46,13 +46,7 @@ const Form: React.FC<FormProps> = ({ onUploadFailure, onSubmissionSuccess }) => 
         try {
             const s3Url = await uploadFileToS3(selectedFile, selectedFileBlob, selectedFileType, nanoId);
 
-            const dynamoDBURL = MANAGE_FOVUS_SUBMISSIONS_TABLE_API + "/fovusSubmissions";
-            if (typeof dynamoDBURL !== 'string') {
-                console.error('API URL is not defined');
-                return;
-            }
-
-            await fetch(dynamoDBURL, {
+            await fetch(MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',

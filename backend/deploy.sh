@@ -1,22 +1,30 @@
 #!/bin/bash
 
+# AWS region for the stacks
+region="us-east-1"
+
 # Initial CDK Deployment
-cdk deploy 
+cdk synth
+cdk bootstrap
+cdk deploy BackendStack
 echo "--- Initial Deployment Done ---"
 
 # Capture the API endpoints & Bucket name directly from AWS CLI
 dynamodb_api_endpoint=$(aws cloudformation describe-stacks \
                 --stack-name BackendStack \
-                --query "Stacks[0].Outputs[?OutputKey=='DynamoDBAPIEndpoint'].OutputValue" \
+                --region $region \
+                --query "Stacks[0].Outputs[?OutputKey=='manageUserSubmissionsTableApi'].OutputValue" \
                 --output text)
 
 s3_api_endpoint=$(aws cloudformation describe-stacks \
                 --stack-name BackendStack \
-                --query "Stacks[0].Outputs[?OutputKey=='S3APIEndpoint'].OutputValue" \
+                --region $region \
+                --query "Stacks[0].Outputs[?OutputKey=='signedS3UrlGeneratorApi'].OutputValue" \
                 --output text)
 
 bucket_name=$(aws cloudformation describe-stacks \
                 --stack-name BackendStack \
+                --region $region \
                 --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
                 --output text)
 
@@ -32,6 +40,14 @@ createVm_and_runScript_lambda_updated="lambda/createVm_and_runScript/createVm_an
 sed -e "s|<S3_SIGN_API>|${s3_api_endpoint//\//\\/}|g" $createVm_and_runScript_lambda_template > $createVm_and_runScript_lambda_updated
 echo "--- Local Lambda createVm_and_runScript Updated ---"
 
+# Update the frontend with the API endpoints
+api_endpoints_ts="../frontend/src/assets/apiEndpoints.ts"
+sed -i '' -e "s|<DYNAMODB_ENDPOINT>|${dynamodb_api_endpoint}|g" \
+          -e "s|<S3_ENDPOINT>|${s3_api_endpoint}|g" \
+          $api_endpoints_ts
+echo "--- Frontend API Endpoints Updated ---"
+
+
 # Final CDK Deployment
-cdk deploy 
+cdk deploy BackendStack
 echo "--- Final Deployment Complete ---"

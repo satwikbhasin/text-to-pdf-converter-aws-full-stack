@@ -26,7 +26,7 @@ exports.handler = async (event) => {
         cd /home/ec2-user/
         echo '${submissionId}' > submissionId.txt
         
-        SIGNED_URL_API="${S3SignAPI}uploads?type=download&key=script.py"
+        SIGNED_URL_API="${S3SignAPI}?type=download&key=script.py"
         response=$(curl -s $SIGNED_URL_API)
         
         download_url=$(echo $response | jq -r '.downloadURL')
