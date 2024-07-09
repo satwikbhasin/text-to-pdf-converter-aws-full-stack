@@ -1,8 +1,8 @@
 # aws-full-stack-demo-app
 
 ## Amplify Deployment Link
-https://main.d1p4du9gsoojvb.amplifyapp.com/
-
+[https://main.d1p4du9gsoojvb.amplifyapp.com/
+](https://main.du0zlvfacbhap.amplifyapp.com)
 ## Frontend Setup
 
 ***Note:** Make sure you have Node.js installed, we will be using `npm`*
