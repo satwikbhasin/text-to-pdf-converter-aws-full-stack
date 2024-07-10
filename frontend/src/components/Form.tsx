@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
-import { MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT } from '../assets/apiEndpoints';
 
-import validationErrors from './messages/validationErrors';
+import validationErrors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
+import insertToDynamoDB from '../methods/insertToDynamoDB';
 
 interface FormProps {
     onSubmissionSuccess: () => void;
-    onUploadFailure: () => void;
+    onSubmissionFailure: () => void;
 }
 
-const Form: React.FC<FormProps> = ({ onUploadFailure, onSubmissionSuccess }) => {
+const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess }) => {
     const [inputText, setInputText] = useState<string>('');
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [selectedFileType, setSelectedFileType] = useState<string>('');
@@ -20,10 +20,7 @@ const Form: React.FC<FormProps> = ({ onUploadFailure, onSubmissionSuccess }) => 
     const [inputTextError, setInputTextError] = useState<string>('');
     const [selectedFileError, setSelectedFileError] = useState<string>('');
 
-    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-
+    const validateForm = (): boolean => {
         let isValid = true;
         if (!inputText) {
             setInputTextError(validationErrors.inputTextRequired);
@@ -37,39 +34,39 @@ const Form: React.FC<FormProps> = ({ onUploadFailure, onSubmissionSuccess }) => 
         } else {
             setSelectedFileError('');
         }
+        return isValid;
+    };
 
-        if (!isValid) return;
-
-        const nanoId = nanoid();
-
-        let fileUploadSuccess = true;
+    const handleFileUpload = async (): Promise<boolean> => {
         try {
-            const s3Url = await uploadFileToS3(selectedFile, selectedFileBlob, selectedFileType, nanoId);
-
-            await fetch(MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    id: nanoId,
-                    text: inputText,
-                    fileS3Path: s3Url,
-                    entryType: "input",
-                }),
-            });
-
+            const nanoId = nanoid();
+            const s3Url = await uploadFileToS3(selectedFile!, selectedFileBlob!, selectedFileType, nanoId);
+            await insertToDynamoDB(inputText, s3Url!, nanoId);
+            return true;
         } catch (error) {
-            fileUploadSuccess = false;
             console.error('Error uploading file:', error);
+            return false;
         }
+    };
 
-        if (!fileUploadSuccess) {
-            onUploadFailure();
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+
+        if (!validateForm()) {
+            setIsSubmitting(false);
             return;
         }
-        setIsSubmitting(false);
 
+        const fileUploadSuccess = await handleFileUpload();
+
+        if (!fileUploadSuccess) {
+            onSubmissionFailure();
+            setIsSubmitting(false);
+            return;
+        }
+
+        setIsSubmitting(false);
         onSubmissionSuccess();
     };
 
@@ -90,33 +87,37 @@ const Form: React.FC<FormProps> = ({ onUploadFailure, onSubmissionSuccess }) => 
 
     return (
         <div>
-            <h1 className="text-lg sm:text-lg md:text-lg lg:text-2xl xl:text-2xl 2xl:text-2xl font-bold mb-6 text-gray-900 text-center">Upload & Submit</h1>
-            <form className="grid gap-6" onSubmit={handleSubmit}>
+            <h1 className="font-bold mb-6 text-gray-900 text-center text-xl">Text to PDF Converter</h1>
+            <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid gap-2">
-                    <label htmlFor="inputText" className="text-sm font-medium text-gray-700">
-                        Text Input
+                    <label htmlFor="inputText" className="font-medium text-gray-700 text-md">
+                        PDF Name
                     </label>
                     <input
                         type="text"
                         id="inputText"
                         value={inputText}
                         onChange={handleInputChange}
-                        className="block w-full border border-indigo-300 rounded-md shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="block w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Enter text"
                     />
-                    {inputTextError && <p className="text-red-500 text-xs">{inputTextError}</p>}
+                    <div className="h-4">
+                        {inputTextError && <p className="text-red-500 text-xs">{inputTextError}</p>}
+                    </div>
                 </div>
                 <div className="grid gap-2">
-                    <label htmlFor="fileInput" className="text-sm font-medium text-gray-700">
-                        File Input
+                    <label htmlFor="fileInput" className="font-medium text-gray-700 text-md">
+                        Text File
                     </label>
                     <input
                         type="file"
                         id="fileInput"
                         onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-900 border border-indigo-300 rounded-md cursor-pointer focus:outline-none"
+                        className="block w-full text-sm text-gray-900 border border-indigo-300 rounded-lg cursor-pointer focus:outline-none max-w-full overflow-hidden"
                     />
-                    {selectedFileError && <p className="text-red-500 text-xs">{selectedFileError}</p>}
+                    <div className="h-4">
+                        {selectedFileError && <p className="text-red-500 text-xs">{selectedFileError}</p>}
+                    </div>
                 </div>
                 <div className="grid gap-2 justify-center">
                     {isSubmitting ? (

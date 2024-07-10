@@ -1,56 +1,53 @@
 import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
 
+// Function to get a signed URL for uploading to S3
+const getSignedS3Url = async (fileName: string, fileType: string): Promise<string> => {
+  const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?fileName=${encodeURIComponent(fileName)}&fileType=${fileType}`;
+  const response = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to fetch upload URL");
+
+  const { uploadURL } = await response.json();
+  return uploadURL;
+};
+
+// Function to upload a file to S3 using the signed URL
+const uploadFile = async (uploadURL: string, fileBlob: Blob, fileType: string): Promise<void> => {
+  const response = await fetch(uploadURL, {
+    method: "PUT",
+    body: fileBlob,
+    headers: {
+      "Content-Type": fileType,
+    },
+  });
+
+  if (!response.ok) throw new Error("Failed to upload file to S3");
+};
+
+// Main function to handle the file upload process
 const uploadFileToS3 = async (
   selectedFile: File | null,
   selectedFileBlob: Blob | null,
   selectedFileType: string,
   nanoId: string
 ): Promise<string | null> => {
+  if (!selectedFile) return null;
+
   try {
-    if (selectedFile) {
-      const getS3SignedUrl = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?fileName=${encodeURIComponent(
-        "input_" + nanoId + "~" + selectedFile.name
-      )}&fileType=${selectedFileType}`;
+    const fileName = `input_${nanoId}~${selectedFile.name}`;
+    const uploadURL = await getSignedS3Url(fileName, selectedFileType);
+    await uploadFile(uploadURL, selectedFileBlob!, selectedFileType);
 
-      const response = await fetch(getS3SignedUrl, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch upload URL");
-      }
-
-      const data = await response.json();
-      const uploadUrl = data.uploadURL;
-
-      const uploadResponse = await fetch(uploadUrl, {
-        method: "PUT",
-        body: selectedFileBlob,
-        headers: {
-          "Content-Type": selectedFileType,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error("Failed to upload file to S3");
-      }
-
-      const urlParts = new URL(uploadUrl);
-      // URL format is https://backendstack-bucketName.s3.amazonaws.com/...
-      // Bucket name = first string after splitting by '.s3.amazonaws.com'
-      const bucketName = urlParts.hostname.split(".s3.amazonaws.com")[0];
-
-      const s3ObjectKey = uploadUrl.split("?")[0].split("/").pop();
-      const s3Path = `${bucketName}/${s3ObjectKey}`;
-
-      return s3Path;
-    }
-    return null;
+    const s3Path = new URL(uploadURL).pathname.substring(1);
+    return s3Path;
   } catch (error) {
-    throw new Error("Error uploading file to S3");
+    console.error("Error uploading file to S3:", error);
+    return null;
   }
 };
 

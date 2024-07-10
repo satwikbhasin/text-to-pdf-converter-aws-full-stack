@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Form from './components/Form'
-import SubmissionSuccessAlert from './components/messages/submissionSuccessAlert';
-import FileUploadError from './components/messages/fileUploadError';
+import SubmissionSuccessAlert from './components/submissionResult/submissionSuccessAlert';
+import FileUploadError from './components/submissionResult/fileUploadError';
 
 const App: React.FC = () => {
   const [submissionSuccess, setSubmissionSuccess] = useState(false);
@@ -18,14 +18,14 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-emerald-700">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-3/4 sm:w-1/3 md:w-1/3 lg:w-1/3 xl:w-1/3 2xl:w-1/3 mx-auto">
+    <div className="grid place-items-center min-h-screen bg-emerald-700 p-5">
+      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
         {submissionSuccess ? (
           <SubmissionSuccessAlert />
         ) : uploadFailure ? (
           <FileUploadError />
         ) : (
-          <Form onUploadFailure={handleUploadFailure} onSubmissionSuccess={handleSubmissionSuccess} />
+          <Form onSubmissionFailure={handleUploadFailure} onSubmissionSuccess={handleSubmissionSuccess} />
         )}
       </div>
     </div>
