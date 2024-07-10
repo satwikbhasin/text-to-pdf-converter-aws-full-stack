@@ -1,6 +1,7 @@
 import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
 import Cookies from "js-cookie";
 import { saveAs } from "file-saver";
+import checkPdfStatus from "./checkPdfStatus";
 
 const getSignedS3Url = async (): Promise<string> => {
   const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${Cookies.get(
@@ -24,8 +25,10 @@ const getSignedS3Url = async (): Promise<string> => {
   return downloadURL;
 };
 
-const downloadPDFFromS3 = async (): Promise<void> => {
+const downloadPdfFromS3 = async (): Promise<void> => {
   const signedDownloadUrl = await getSignedS3Url();
+
+  await checkPdfStatus(Cookies.get("uniqueIdForTextToPDF") || "");
 
   const response = await fetch(signedDownloadUrl);
   if (!response.ok) {
@@ -39,4 +42,4 @@ const downloadPDFFromS3 = async (): Promise<void> => {
   saveAs(blob, fileName);
 };
 
-export default downloadPDFFromS3;
+export default downloadPdfFromS3;

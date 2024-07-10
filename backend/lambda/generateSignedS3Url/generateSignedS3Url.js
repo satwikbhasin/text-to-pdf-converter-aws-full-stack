@@ -6,7 +6,7 @@ AWS.config.update({ region: process.env.AWS_REGION })
 const s3 = new AWS.S3()
 
 const URL_EXPIRATION_SECONDS = 30
-const ALLOWED_ORIGINS = ['https://main.du0zlvfacbhap.amplifyapp.com']
+const ALLOWED_ORIGINS = ['https://main.du0zlvfacbhap.amplifyapp.com, http://localhost:3000']
 const ALLOWED_METHODS = ['GET']
 
 exports.handler = async (event) => {
@@ -20,7 +20,7 @@ exports.handler = async (event) => {
       headers: {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": requestOrigin,
-        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     }
@@ -32,7 +32,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ message: 'Method Not Allowed' }),
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": event.headers.origin,
+        "Access-Control-Allow-Origin": requestOrigin,
         "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
@@ -40,13 +40,13 @@ exports.handler = async (event) => {
   }
 
   if (event.queryStringParameters && event.queryStringParameters.type === 'download') {
-    return await getDownloadURL(event)
+    return await getDownloadURL(event, requestOrigin)
   } else {
-    return await getUploadURL(event)
+    return await getUploadURL(event, requestOrigin)
   }
 }
 
-const getUploadURL = async function (event, origin) {
+const getUploadURL = async function (event, requestOrigin) {
   const Key = event.queryStringParameters?.s3_path || 'lost';
   const contentType = event.queryStringParameters?.fileType;
 
@@ -56,8 +56,8 @@ const getUploadURL = async function (event, origin) {
       body: JSON.stringify({ message: 'Missing required parameters' }),
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": event.headers.origin,
-        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Origin": requestOrigin,
+        "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     }
@@ -79,14 +79,14 @@ const getUploadURL = async function (event, origin) {
     }),
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
+      "Access-Control-Allow-Origin": requestOrigin,
+      "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   }
 }
 
-const getDownloadURL = async function (event, origin) {
+const getDownloadURL = async function (event, requestOrigin) {
   const Key = event.queryStringParameters.s3_path
 
   if (!Key) {
@@ -95,8 +95,8 @@ const getDownloadURL = async function (event, origin) {
       body: JSON.stringify({ message: 'Missing required parameters' }),
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Methods": "GET, PUT, POST, DELETE, OPTIONS",
+        "Access-Control-Allow-Origin": requestOrigin,
+        "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
         "Access-Control-Allow-Headers": "Content-Type, Authorization",
       },
     }
@@ -117,8 +117,8 @@ const getDownloadURL = async function (event, origin) {
     }),
     headers: {
       "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "GET",
+      "Access-Control-Allow-Origin": requestOrigin,
+      "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
       "Access-Control-Allow-Headers": "Content-Type, Authorization",
     },
   }
