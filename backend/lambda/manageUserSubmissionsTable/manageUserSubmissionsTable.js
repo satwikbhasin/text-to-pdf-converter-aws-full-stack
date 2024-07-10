@@ -6,7 +6,7 @@ const client = new DynamoDBClient({});
 const dynamo = DynamoDBDocumentClient.from(client);
 
 const ALLOWED_ORIGINS = ['https://main.du0zlvfacbhap.amplifyapp.com, http://localhost:3000']
-const ALLOWED_METHODS = ['GET', 'PUT']
+const ALLOWED_METHODS = ['GET', 'PUT', 'OPTIONS']
 
 exports.handler = async (event) => {
   const requestOrigin = event.headers.origin

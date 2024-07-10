@@ -7,7 +7,7 @@ const s3 = new AWS.S3()
 
 const URL_EXPIRATION_SECONDS = 30
 const ALLOWED_ORIGINS = ['https://main.du0zlvfacbhap.amplifyapp.com, http://localhost:3000']
-const ALLOWED_METHODS = ['GET']
+const ALLOWED_METHODS = ['GET', 'PUT', 'OPTIONS']
 
 exports.handler = async (event) => {
   const requestOrigin = event.headers.origin
