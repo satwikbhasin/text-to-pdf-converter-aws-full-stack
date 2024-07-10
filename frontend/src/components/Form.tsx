@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import validationErrors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
 import insertToDynamoDB from '../methods/insertToDynamoDB';
+import downloadPDFFromS3 from '../methods/downloadPDFfromS3';
 
 interface FormProps {
     onSubmissionSuccess: () => void;
@@ -49,6 +50,7 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
             Cookies.set('pdfNameForTextToPDF', pdfName);
             const s3Path = await uploadFileToS3(textFile!, selectedFileBlob!, uniqueId);
             await insertToDynamoDB(pdfName, s3Path!, uniqueId);
+            await downloadPDFFromS3();
             return true;
         } catch (error) {
             console.error('Error uploading file:', error);

@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertCircle, Download } from 'lucide-react';
-import downloadPDFFromS3 from '../../methods/downloadPDFfromS3';
+// import downloadPDFFromS3 from '../../methods/downloadPDFfromS3';
 
 const SubmissionSuccessAlert = () => {
     return (
@@ -13,10 +13,10 @@ const SubmissionSuccessAlert = () => {
                     </div>
                 </div>
             </div>
-            <button className="mt-4 bg-green-800 text-white rounded-lg p-2 hover:bg-green-600 flex items-center" onClick={downloadPDFFromS3}>
+            {/* <button className="mt-4 bg-green-800 text-white rounded-lg p-2 hover:bg-green-600 flex items-center" onClick={downloadPDFFromS3}>
                 <Download className="w-4 h-4 mr-2" aria-hidden="true" />
                 Download
-            </button>
+            </button> */}
         </div>
     );
 };
