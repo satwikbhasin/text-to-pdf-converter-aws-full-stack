@@ -37,7 +37,7 @@ echo "--- Local Script Updated ---"
 # Update the existing lambda script with the API endpoint 
 createVm_and_runScript_lambda_template="lambda/createVm_and_runScript/template/createVm_and_runScript.js"
 createVm_and_runScript_lambda_updated="lambda/createVm_and_runScript/createVm_and_runScript.js"
-sed -e "s|<S3_SIGN_API>|${s3_api_endpoint//\//\\/}|g" $createVm_and_runScript_lambda_template > $createVm_and_runScript_lambda_updated
+sed -e "s|<S3_API_ENDPOINT>|${s3_api_endpoint//\//\\/}|g" $createVm_and_runScript_lambda_template > $createVm_and_runScript_lambda_updated
 echo "--- Local Lambda createVm_and_runScript Updated ---"
 
 # Update the frontend with the API endpoints

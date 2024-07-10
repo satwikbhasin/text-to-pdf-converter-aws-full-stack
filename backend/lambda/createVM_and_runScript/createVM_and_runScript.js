@@ -1,49 +1,39 @@
 const { EC2Client, RunInstancesCommand } = require("@aws-sdk/client-ec2");
 
-const ec2Client = new EC2Client({});
-
 exports.handler = async (event) => {
+    const ec2Client = new EC2Client({});
     const instanceImageId = "ami-06c68f701d8090592";
     const instanceType = "t2.micro";
 
     try {
         const { Records } = event;
         for (const record of Records) {
-            console.log(record);
             if (record.eventName === "INSERT" && record.dynamodb) {
 
                 const tableEntry = record.dynamodb.NewImage;
-                
-                const submissionId = tableEntry.id.S;
-                const entryType = tableEntry.entryType.S;
-
-                var S3SignAPI = "https://2a9vriqi8d.execute-api.us-east-1.amazonaws.com/prod/";
-                
-                if (entryType == "input") {
-
-                    // Define user data script
+                if (tableEntry.submitter.S === "user") {
+                    const submissionId = tableEntry.id.S;
+                    var S3SignAPI = "https://2a9vriqi8d.execute-api.us-east-1.amazonaws.com/prod/";
                     const user_data_script = `#!/bin/bash
         cd /home/ec2-user/
-        echo '${submissionId}' > submissionId.txt
         
-        SIGNED_URL_API="${S3SignAPI}?type=download&key=script.py"
+        SIGNED_URL_API="${S3SignAPI}?type=download&s3_path=script.py"
         response=$(curl -s $SIGNED_URL_API)
-        
         download_url=$(echo $response | jq -r '.downloadURL')
-        
         curl -O "$download_url"       
+        
+        sudo yum install -y python3-pip
+        pip3 install fpdf
 
         chmod +x /home/ec2-user/script.py
-        ./script.py
+        ./script.py ${submissionId}
         shutdown -h now
         `;
 
-                    // Encode user data script to base64
                     const user_data_base64 = Buffer.from(
                         user_data_script
                     ).toString("base64");
 
-                    // Define instance launch parameters
                     const instanceParams = {
                         ImageId: instanceImageId,
                         InstanceType: instanceType,
@@ -56,17 +46,16 @@ exports.handler = async (event) => {
                                 Tags: [
                                     {
                                         Key: "Name",
-                                        Value: `EC2Instance-${submissionId}`,
+                                        Value: `${submissionId}`,
                                     },
                                 ],
                             },
                         ],
                         InstanceInitiatedShutdownBehavior: "terminate"
                     };
-                    
-                    
-                    // Launch EC2 instance
-                    await ec2Client.send(new RunInstancesCommand(instanceParams));}
+
+                    await ec2Client.send(new RunInstancesCommand(instanceParams));
+                }
             }
         }
 

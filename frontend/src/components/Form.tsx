@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
+import Cookies from 'js-cookie';
 
 import validationErrors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
@@ -11,37 +12,43 @@ interface FormProps {
 }
 
 const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess }) => {
-    const [inputText, setInputText] = useState<string>('');
-    const [selectedFile, setSelectedFile] = useState<File | null>(null);
-    const [selectedFileType, setSelectedFileType] = useState<string>('');
+    const [pdfName, setPdfName] = useState<string>('');
+    const [textFile, setTextFile] = useState<File | null>(null);
     const [selectedFileBlob, setSelectedFileBlob] = useState<Blob | null>(null);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [inputTextError, setInputTextError] = useState<string>('');
-    const [selectedFileError, setSelectedFileError] = useState<string>('');
+    const [pdfNameError, setPdfNameError] = useState<string>('');
+    const [textFileError, setTextFileError] = useState<string>('');
 
     const validateForm = (): boolean => {
         let isValid = true;
-        if (!inputText) {
-            setInputTextError(validationErrors.inputTextRequired);
+        if (!pdfName) {
+            setPdfNameError(validationErrors.inputTextRequired);
             isValid = false;
         } else {
-            setInputTextError('');
+            setPdfNameError('');
         }
-        if (!selectedFile) {
-            setSelectedFileError(validationErrors.fileSelectionRequired);
+        if (!textFile) {
+            setTextFileError(validationErrors.textFileRequired);
             isValid = false;
         } else {
-            setSelectedFileError('');
+            setTextFileError('');
+        }
+        console.log(textFile?.type);
+        if (textFile && textFile.type !== 'text/plain') {
+            setTextFileError(validationErrors.textFileInvalid);
+            isValid = false;
         }
         return isValid;
     };
 
     const handleFileUpload = async (): Promise<boolean> => {
         try {
-            const nanoId = nanoid();
-            const s3Url = await uploadFileToS3(selectedFile!, selectedFileBlob!, selectedFileType, nanoId);
-            await insertToDynamoDB(inputText, s3Url!, nanoId);
+            const uniqueId = nanoid();
+            Cookies.set('uniqueIdForTextToPDF', uniqueId);
+            Cookies.set('pdfNameForTextToPDF', pdfName);
+            const s3Path = await uploadFileToS3(textFile!, selectedFileBlob!, uniqueId);
+            await insertToDynamoDB(pdfName, s3Path!, uniqueId);
             return true;
         } catch (error) {
             console.error('Error uploading file:', error);
@@ -72,16 +79,15 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInputText(e.target.value);
-        if (inputTextError) setInputTextError('');
+        setPdfName(e.target.value);
+        if (pdfNameError) setPdfNameError('');
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
-            setSelectedFileType(e.target.files[0].type);
+            const file = e.target.files[0];
+            setTextFile(file);
             setSelectedFileBlob(new Blob([e.target.files[0]]));
-            setSelectedFileError('');
         }
     };
 
@@ -96,13 +102,13 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
                     <input
                         type="text"
                         id="inputText"
-                        value={inputText}
+                        value={pdfName}
                         onChange={handleInputChange}
                         className="block w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Enter text"
                     />
                     <div className="h-4">
-                        {inputTextError && <p className="text-red-500 text-xs">{inputTextError}</p>}
+                        {pdfNameError && <p className="text-red-500 text-xs">{pdfNameError}</p>}
                     </div>
                 </div>
                 <div className="grid gap-2">
@@ -116,7 +122,7 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
                         className="block w-full text-sm text-gray-900 border border-indigo-300 rounded-lg cursor-pointer focus:outline-none max-w-full overflow-hidden"
                     />
                     <div className="h-4">
-                        {selectedFileError && <p className="text-red-500 text-xs">{selectedFileError}</p>}
+                        {textFileError && <p className="text-red-500 text-xs">{textFileError}</p>}
                     </div>
                 </div>
                 <div className="grid gap-2 justify-center">

@@ -1,153 +1,136 @@
 #!/usr/bin/env python3
 
-import os
 import sys
 import requests
-import json
+from fpdf import FPDF
 
 # Global variables for API endpoints
-dynamodb = f"<DYNAMODB_API_ENDPOINT>"
-s3 = f"<S3_API_ENDPOINT>"
-bucket_name_from_cdk = f"<BUCKET_NAME>"
+DYNAMODB_API_ENDPOINT = "<DYNAMODB_API_ENDPOINT>"
+S3_API_ENDPOINT = "<S3_API_ENDPOINT>"
+BUCKET_NAME = "<BUCKET_NAME>"
 
-def get_from_dynamodb_using_submission_id(submission_id):
-    try:
-        
-        dynamoDB_URL = f"{dynamodb}/{submission_id}"
-        response = requests.get(dynamoDB_URL)
 
-        if response.status_code != 200:
-            print("Failed to retrieve submission entry from DynamoDB")
-            return
+def get_dynamodb_entry(submission_id):
+    """Retrieve the DynamoDB entry using the submission ID."""
+    dynamoDB_URL = f"{DYNAMODB_API_ENDPOINT}/{submission_id}"
+    response = requests.get(dynamoDB_URL)
+    response.raise_for_status()
+    return response.json()
 
-        dynamoDBSubmissionEntry = response.json()
-        # Extract the S3 path and key from DynamoDB entry
-        s3Path = dynamoDBSubmissionEntry.get('fileS3Path')
-        inputText = dynamoDBSubmissionEntry.get('text')
-        s3_key = s3Path.split('/', 1)[-1]
 
-        # API endpoint to get the signed URL for file download
-        GetS3SignedURL = f"{s3}"
+def get_signed_s3_url(s3_path, type):
+    """Get the signed URL for downloading/uploading the file from/to S3."""
+    GetS3SignedURL = f"{S3_API_ENDPOINT}"
+
+    if type == "download":
+        params = {"type": "download", "s3_path": s3_path}
+    else:
         params = {
-            "type": "download",
-            "key": s3_key
+            "type": "upload",
+            "s3_path": s3_path,
+            "fileType": "application/pdf",
         }
 
-        # Make a GET request to the API endpoint to get the signed URL
-        signedS3URLResponse = requests.get(GetS3SignedURL, params=params)
+    response = requests.get(GetS3SignedURL, params=params)
+    response.raise_for_status()
 
-        if signedS3URLResponse.status_code != 200:
-            print("Failed to retrieve signed S3 URL")
-            return
-
-        signedS3URL = signedS3URLResponse.json().get("downloadURL")
-
-        # Use the signed URL to download the file from S3
-        fileResponse = requests.get(signedS3URL)
-
-        if fileResponse.status_code != 200:
-            print("Failed to download the file from S3")
-            return
-
-        # Save the file locally with the same name as s3_key
-        with open(s3_key, 'wb') as f:
-            f.write(fileResponse.content)
-
-        return inputText, s3_key
-
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        sys.exit(1)
+    return (
+        response.json().get("downloadURL")
+        if type == "download"
+        else response.json().get("uploadURL")
+    )
 
 
-def modify_input_file(inputText, input_file_path):
-    inputTextLength = len(inputText)
-
-    with open(input_file_path, 'a') as file:
-        file.write(f"{inputTextLength}")
-        file.write(" : ")
-        file.write(f"{inputText}")
-
-    base_file_path = os.path.splitext(input_file_path)[0]
-    new_file_path = base_file_path.replace('input_', 'output_') + '.txt'
-
-    # Rename the file
-    os.rename(input_file_path, new_file_path)
-
-    return new_file_path
+def download_file_from_s3(signed_url, download_path):
+    """Download the file using the signed URL and save it to the specified path."""
+    response = requests.get(signed_url)
+    response.raise_for_status()
+    with open(download_path, "wb") as file:
+        file.write(response.content)
 
 
-def upload_to_s3(file_path):
-    # Get the signed URL from the API
+def upload_file_to_s3(file_path, signed_url):
+    """Upload the file to S3 using the signed URL."""
     try:
-        url = f"{s3}?fileName={file_path}"
-        response = requests.get(url)
-        signed_url = response.json().get("uploadURL")
-    except Exception as e:
-        print(f"Failed to get signed URL: {e}")
-        return
-
-    # Read the file content into a blob
-    try:
-        with open(file_path, 'rb') as file:
-            file_blob = file.read()
-    except Exception as e:
-        print(f"Failed to read file into blob: {e}")
-        return
-
-    try:
-        # Upload the blob to S3 using the signed URL
-        upload_response = requests.put(signed_url, data=file_blob, headers={
-            "Content-Type": "text/plain",
-        })
-        upload_response.raise_for_status()
-        print("Blob uploaded successfully")
-    except Exception as e:
-        print(f"Failed to upload blob: {e}")
-
-    s3_object_key = signed_url.split("?")[0].split("/")[-1]
-    bucket_name = f"{bucket_name_from_cdk}"
-    s3_path = f"{bucket_name}/{s3_object_key}"
-
-    return s3_path;
-
-
-def write_to_dynamodb(s3_path, submission_id, inputText):
-    url = f'{dynamodb}'
-    payload = {
-        "id": submission_id,
-        "text": inputText,
-        "fileS3Path": s3_path,
-        "entryType": "output"
-    }
-
-    headers = {
-        'Content-Type': 'application/json'
-    }
-
-    try:
-        response = requests.put(url, data=json.dumps(payload), headers=headers)
+        with open(file_path, "rb") as file:
+            files = {"file": file}
+            response = requests.put(
+                signed_url,
+                files=files,
+                headers={
+                    "Content-Type": "application/pdf",
+                },
+            )
         response.raise_for_status()
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while uploading the file to S3: {e}")
 
 
-def main():
+def convert_to_pdf(input_path, output_path):
+    """Convert the input file to a PDF and save it to the specified path."""
     try:
-        with open('submissionId.txt', 'r') as file:
-            submission_id = file.read().strip()
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=10)
+    
+        with open(input_path, 'r') as file:
+            for line in file:
+                pdf.cell(200, 10, txt=line, ln=True)
+    
+        pdf.output(output_path)
     except Exception as e:
-        print(f"Error reading submissionId from file: {str(e)}")
-        sys.exit(1)
+        print(f"An error occurred: {e}")
 
-    inputText, input_file_path = get_from_dynamodb_using_submission_id(submission_id)
 
-    modified_file_path = modify_input_file(inputText, input_file_path)
+def insert_file_to_dynamodb(new_s3_path, dynamoDBSubmissionEntry):
+    """Update the DynamoDB entry with the new S3 path."""
+    try:
+        dynamoDB_URL = f"{DYNAMODB_API_ENDPOINT}"
+        data = {
+            "id": dynamoDBSubmissionEntry.get("id"),
+            "submitter": "server",
+            "fileS3Path": new_s3_path,
+            "pdfName": dynamoDBSubmissionEntry.get("pdfName"),
+        }
+        response = requests.put(dynamoDB_URL, json=data)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred while updating DynamoDB: {e}")
 
-    s3_path = upload_to_s3(modified_file_path)
 
-    write_to_dynamodb(s3_path, submission_id, inputText)
+def process_submission(submission_id):
+    """Main function to process the submission."""
+    try:
+        # Retrieve DynamoDB entry
+        dynamoDBSubmissionEntry = get_dynamodb_entry(submission_id)
+        s3_path = dynamoDBSubmissionEntry.get("fileS3Path")
+        pdfName = dynamoDBSubmissionEntry.get("pdfName")
+
+        # Download the text file from S3
+        signedS3URL = get_signed_s3_url(s3_path, "download")
+        downloaded_file_path = "/tmp/downloaded_file.txt"
+        download_file_from_s3(signedS3URL, downloaded_file_path)
+
+        # Convert the downloaded file to PDF
+        pdf_output_path = f"/tmp/{pdfName}.pdf"
+        convert_to_pdf(downloaded_file_path, pdf_output_path)
+
+        # Upload the PDF file to S3
+        new_s3_key = s3_path.split("/", 1)[0] + f"/{pdfName}.pdf"
+        signedS3URL = get_signed_s3_url(new_s3_key, "upload")
+        upload_file_to_s3(pdf_output_path, signedS3URL)
+
+        # Update the DynamoDB entry with the new S3 path
+        insert_file_to_dynamodb(new_s3_key, dynamoDBSubmissionEntry)
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) != 2:
+        print("Usage: script.py <submission_id>")
+        sys.exit(1)
+
+    submission_id = sys.argv[1]
+    process_submission(submission_id)

@@ -1,9 +1,9 @@
 import { MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT } from "../assets/apiEndpoints";
 
 async function insertToDynamoDB(
-  inputText: string,
-  s3Url: string,
-  nanoId: string
+  pdfName: string,
+  s3Path: string,
+  uniqueId: string
 ) {
   await fetch(MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT, {
     method: "PUT",
@@ -11,10 +11,10 @@ async function insertToDynamoDB(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      id: nanoId,
-      text: inputText,
-      fileS3Path: s3Url,
-      entryType: "input",
+      id: uniqueId,
+      pdfName: pdfName,
+      fileS3Path: s3Path,
+      submitter: "user",
     }),
   });
 }

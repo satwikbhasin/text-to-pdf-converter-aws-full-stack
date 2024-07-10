@@ -21,18 +21,18 @@ exports.handler = async (event, context) => {
         const parsedBody = JSON.parse(event.body);
 
         const submissionId = parsedBody.id;
-        const text = parsedBody.text;
+        const pdfName = parsedBody.pdfName;
         const fileS3Path = parsedBody.fileS3Path;
-        const entryType = parsedBody.entryType;
+        const submitter = parsedBody.submitter;
 
         await dynamo.send(
           new PutCommand({
             TableName: process.env.TableName,
             Item: {
               id: submissionId,
-              text: text,
+              pdfName: pdfName,
               fileS3Path: fileS3Path,
-              entryType: entryType,
+              submitter: submitter,
             },
           })
         );
