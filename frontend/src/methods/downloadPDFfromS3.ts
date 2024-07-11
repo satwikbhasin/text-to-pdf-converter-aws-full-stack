@@ -3,13 +3,11 @@ import Cookies from "js-cookie";
 import { saveAs } from "file-saver";
 import checkPdfStatus from "./checkPdfStatus";
 
-const getSignedS3Url = async (): Promise<string> => {
-  const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${Cookies.get(
-    "uniqueIdForTextToPDF"
-  )}/${Cookies.get("pdfNameForTextToPDF")}.pdf&type=download`;
-
-  console.log("URL:", url);
-
+const getSignedS3Url = async (
+  uniqueId: string,
+  pdfFileName: string
+): Promise<string> => {
+  const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${uniqueId}/${pdfFileName}.pdf&type=download`;
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -25,21 +23,29 @@ const getSignedS3Url = async (): Promise<string> => {
   return downloadURL;
 };
 
-const downloadPdfFromS3 = async (): Promise<void> => {
-  const signedDownloadUrl = await getSignedS3Url();
-
-  await checkPdfStatus(Cookies.get("uniqueIdForTextToPDF") || "");
-
-  const response = await fetch(signedDownloadUrl);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to download ${Cookies.get("pdfNameForTextToPDF")}.pdf`
+const downloadPdfFromS3 = async (uniqueId: string): Promise<String | void> => {
+  const pdfStatus = await checkPdfStatus(uniqueId);
+  if (pdfStatus.status === "pdfNotReady") {
+    return "pdfNotReady";
+  } else if (pdfStatus.status === "pdfNotFound") {
+    return "pdfNotFound";
+  } else {
+    const signedDownloadUrl = await getSignedS3Url(
+      uniqueId,
+      pdfStatus.pdfName!
     );
-  }
 
-  const blob = await response.blob();
-  const fileName = Cookies.get("pdfNameForTextToPDF") + ".pdf";
-  saveAs(blob, fileName);
+    const response = await fetch(signedDownloadUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download PDF for ${uniqueId}`);
+    }
+
+    const blob = await response.blob();
+    const fileName = Cookies.get("pdfNameForTextToPDF") + ".pdf";
+    saveAs(blob, fileName);
+
+    return "pdfDownloaded";
+  }
 };
 
 export default downloadPdfFromS3;

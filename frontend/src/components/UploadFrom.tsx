@@ -1,43 +1,46 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
+import { Clipboard, ClipboardCheck, CheckCircle, Upload } from 'lucide-react';
 import Cookies from 'js-cookie';
 
-import validationErrors from '../assets/validationErrors';
+import errors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
 import insertToDynamoDB from '../methods/insertToDynamoDB';
-import downloadPdfFromS3 from '../methods/downloadPdfFromS3';
 
-interface FormProps {
-    onSubmissionSuccess: () => void;
-    onSubmissionFailure: () => void;
+interface UploadFormProps {
+    onSuccess: () => void;
+    onFailure: () => void;
 }
 
-const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess }) => {
+const UploadForm: React.FC<UploadFormProps> = ({ onFailure, onSuccess }) => {
     const [pdfName, setPdfName] = useState<string>('');
     const [textFile, setTextFile] = useState<File | null>(null);
     const [selectedFileBlob, setSelectedFileBlob] = useState<Blob | null>(null);
+    const [uniqueId, setUniqueId] = useState<string>('');
+    const [copied, setCopied] = useState<boolean>(false);
+
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submissionSuccess, setSubmissionSuccess] = useState(false);
     const [pdfNameError, setPdfNameError] = useState<string>('');
     const [textFileError, setTextFileError] = useState<string>('');
 
     const validateForm = (): boolean => {
         let isValid = true;
         if (!pdfName) {
-            setPdfNameError(validationErrors.inputTextRequired);
+            setPdfNameError(errors.validation.uploadForm.inputTextRequired);
             isValid = false;
         } else {
             setPdfNameError('');
         }
         if (!textFile) {
-            setTextFileError(validationErrors.textFileRequired);
+            setTextFileError(errors.validation.uploadForm.textFileRequired);
             isValid = false;
         } else {
             setTextFileError('');
         }
-        console.log(textFile?.type);
         if (textFile && textFile.type !== 'text/plain') {
-            setTextFileError(validationErrors.textFileInvalid);
+            setTextFileError(errors.validation.uploadForm.textFileInvalid);
             isValid = false;
         }
         return isValid;
@@ -46,11 +49,11 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
     const handleFileUpload = async (): Promise<boolean> => {
         try {
             const uniqueId = nanoid();
+            setUniqueId(uniqueId);
             Cookies.set('uniqueIdForTextToPDF', uniqueId);
             Cookies.set('pdfNameForTextToPDF', pdfName);
             const s3Path = await uploadFileToS3(textFile!, selectedFileBlob!, uniqueId);
             await insertToDynamoDB(pdfName, s3Path!, uniqueId);
-            await downloadPdfFromS3();
             return true;
         } catch (error) {
             console.error('Error uploading file:', error);
@@ -70,13 +73,13 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
         const fileUploadSuccess = await handleFileUpload();
 
         if (!fileUploadSuccess) {
-            onSubmissionFailure();
+            onFailure();
             setIsSubmitting(false);
             return;
         }
 
         setIsSubmitting(false);
-        onSubmissionSuccess();
+        setSubmissionSuccess(true);
     };
 
 
@@ -93,9 +96,20 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
         }
     };
 
+    const copyToClipboard = () => {
+        if (uniqueId) {
+            navigator.clipboard.writeText(uniqueId).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 5000);
+            }, (err) => {
+                console.error('Could not copy text: ', err);
+            });
+        }
+    };
+
     return (
         <div>
-            <h1 className="font-bold mb-6 text-gray-900 text-center text-xl">Text to PDF Converter</h1>
+            <h1 className="font-bold mb-6 text-gray-900 text-center">Upload your text file and specify the desired PDF name</h1>
             <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid gap-2">
                     <label htmlFor="inputText" className="font-medium text-gray-700 text-md">
@@ -105,8 +119,9 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
                         type="text"
                         id="inputText"
                         value={pdfName}
+                        disabled={isSubmitting || submissionSuccess}
                         onChange={handleInputChange}
-                        className="block w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500"
+                        className={`text-sm w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500 ${isSubmitting || submissionSuccess ? 'bg-gray-200 cursor-not-allowed' : ''}`}
                         placeholder="Enter text"
                     />
                     <div className="h-4">
@@ -120,8 +135,9 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
                     <input
                         type="file"
                         id="fileInput"
+                        disabled={isSubmitting || submissionSuccess}
                         onChange={handleFileChange}
-                        className="block w-full text-sm text-gray-900 border border-indigo-300 rounded-lg cursor-pointer focus:outline-none max-w-full overflow-hidden"
+                        className={`overflow-hidden text-sm w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500 ${isSubmitting || submissionSuccess ? 'bg-gray-200 cursor-not-allowed' : ''}`}
                     />
                     <div className="h-4">
                         {textFileError && <p className="text-red-500 text-xs">{textFileError}</p>}
@@ -138,10 +154,37 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
                     ) : (
                         <button
                             type="submit"
-                            className="bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 hover:bg-gradient-to-br focus:ring-4 focus:ring-emerald-300 text-white font-medium rounded-lg px-5 py-2.5 text-sm"
-                        >
-                            Submit
+                            disabled={isSubmitting || submissionSuccess}
+                            className={`${submissionSuccess
+                                ? 'bg-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 hover:bg-gradient-to-br'
+                                } focus:ring-4 focus:ring-emerald-300 text-white font-medium rounded-lg px-5 py-2.5 text-sm flex items-center justify-center`}                        >
+                            {submissionSuccess ? (
+                                <>
+                                    <CheckCircle className="h-4 mr-1" />
+                                    Submitted
+                                </>
+                            ) : (
+                                <>
+                                    <Upload className="h-4 mr-1" />
+                                    Submit
+                                </>
+                            )}
                         </button>
+                    )}
+                </div>
+                <div>
+                    {submissionSuccess ? (
+                        <div className="border border-indigo-500 flex justify-center items-center mt-2 grid gap-2 p-2 rounded-lg justify-center bg-gray-200 text-sm text-gray-900">
+                            <span className="flex font-bold items-center justify-center">Unique Submission ID</span>
+                            <span className="flex items-center justify-center">{uniqueId}
+                                <button onClick={copyToClipboard} className="" type='button'>
+                                    {copied ? <ClipboardCheck className="h-4 text-emerald-500" /> : <Clipboard className="h-4 text-emerald-500" />}
+                                </button>
+                            </span>
+                        </div>
+                    ) : (
+                        <div></div>
                     )}
                 </div>
             </form>
@@ -149,4 +192,4 @@ const Form: React.FC<FormProps> = ({ onSubmissionFailure, onSubmissionSuccess })
     );
 }
 
-export default Form;
+export default UploadForm;

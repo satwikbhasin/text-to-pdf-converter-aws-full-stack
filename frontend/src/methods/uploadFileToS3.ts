@@ -40,13 +40,12 @@ const uploadFileToS3 = async (
   if (!selectedFile) return null;
 
   try {
+
     const uploadURL = await getSignedS3Url(uniqueId);
     await uploadFile(uploadURL, selectedFileBlob!);
-
-    console.log("File uploaded to S3:", uploadURL);
-
     const s3Path = new URL(uploadURL).pathname.substring(1);
     return s3Path;
+    
   } catch (error) {
     console.error("Error uploading file to S3:", error);
     return null;

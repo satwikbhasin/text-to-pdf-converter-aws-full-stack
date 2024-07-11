@@ -1,6 +1,6 @@
 import React from 'react';
-import { AlertCircle, Download } from 'lucide-react';
-// import downloadPDFFromS3 from '../../methods/downloadPDFfromS3';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import "../../styles/success.css";
 
 const SubmissionSuccessAlert = () => {
     return (
@@ -12,11 +12,10 @@ const SubmissionSuccessAlert = () => {
                         Conversion Successful
                     </div>
                 </div>
+                <button onClick={() => window.location.reload()} className="rotate-on-hover flex items-center px-4 py-2 text-sm font-medium border border-transparent rounded-md">
+                    <CheckCircle className="w-4 h-4" aria-hidden="true" />
+                </button>
             </div>
-            {/* <button className="mt-4 bg-green-800 text-white rounded-lg p-2 hover:bg-green-600 flex items-center" onClick={downloadPDFFromS3}>
-                <Download className="w-4 h-4 mr-2" aria-hidden="true" />
-                Download
-            </button> */}
         </div>
     );
 };

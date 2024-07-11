@@ -5,25 +5,11 @@ const client = new DynamoDBClient({});
 
 const dynamo = DynamoDBDocumentClient.from(client);
 
-const ALLOWED_ORIGINS = ['https://main.du0zlvfacbhap.amplifyapp.com, http://localhost:3000']
-const ALLOWED_METHODS = ['GET', 'PUT', 'OPTIONS']
+const ALLOWED_METHODS = ['GET','PUT','OPTIONS']
 
 exports.handler = async (event) => {
   const requestOrigin = event.headers.origin
   const requestMethod = event.httpMethod
-
-  if (!ALLOWED_ORIGINS.includes(requestOrigin)) {
-    return {
-      statusCode: 403,
-      body: JSON.stringify({ message: 'Forbidden' }),
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": requestOrigin,
-        "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    }
-  }
 
   if (!ALLOWED_METHODS.includes(requestMethod)) {
     return {
@@ -43,8 +29,8 @@ exports.handler = async (event) => {
   let statusCode = 200;
   const headers = {
     "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, PUT",
+    "Access-Control-Allow-Origin": requestOrigin,
+    "Access-Control-Allow-Methods": ALLOWED_METHODS.join(', '),
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 
@@ -83,6 +69,12 @@ exports.handler = async (event) => {
           })
         );
         body = body.Item;
+        
+        if (!body) {
+          statusCode = 404;
+          body = { message: "Item not found" };
+        }
+        
         break;
 
       default:
