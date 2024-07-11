@@ -7,7 +7,7 @@
 
 ## Frontend Setup
 
-**\*Note:** Make sure you have Node.js installed, we will be using `npm`\*
+***Note:** Make sure you have Node.js installed, we will be using `npm`*
 
 - Navigate to the frontend directory
 
