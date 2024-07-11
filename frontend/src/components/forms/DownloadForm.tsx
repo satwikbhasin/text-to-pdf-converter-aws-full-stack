@@ -38,6 +38,7 @@ const DownloadForm: React.FC = () => {
                 setIsDownloading(false);
                 setUniqueIdError(errors.process.download.nonExistentUniqueId);
             } else if (response === "pdfDownloaded") {
+                setUniqueIdError('');
                 setDownloaded(true);
             }
             return true;
