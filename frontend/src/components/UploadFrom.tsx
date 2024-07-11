@@ -6,6 +6,7 @@ import Cookies from 'js-cookie';
 import errors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
 import insertToDynamoDB from '../methods/insertToDynamoDB';
+import '../styles/uploadForm.css';
 
 const UploadForm: React.FC = () => {
     const [pdfName, setPdfName] = useState<string>('');
@@ -51,7 +52,7 @@ const UploadForm: React.FC = () => {
             await insertToDynamoDB(pdfName, s3Path!, uniqueId);
             return true;
         } catch (error) {
-            console.error('Error uploading file:', error);
+            console.error('Error Submitting:', error);
             return false;
         }
     };
@@ -103,7 +104,7 @@ const UploadForm: React.FC = () => {
 
     return (
         <div>
-            <h1 className="font-bold mb-6 text-gray-900 text-center">Upload your text file and specify the desired PDF name</h1>
+            <h1 className="body font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
             <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid gap-2">
                     <label htmlFor="inputText" className="font-medium text-gray-700 text-md">

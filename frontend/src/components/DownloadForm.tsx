@@ -35,18 +35,22 @@ const DownloadForm: React.FC = () => {
             return;
         }
 
-        const response = await downloadPdfFromS3(uniqueId);
-
-        if (response === "pdfNotReady") {
-            setIsDownloading(false);
-            setUniqueIdError(errors.process.downloadForm.pdfNotReady);
-            return;
-        } else if (response === "pdfNotFound") {
-            setIsDownloading(false);
-            setUniqueIdError(errors.process.downloadForm.nonExistentUniqueId);
-            return;
-        } else if (response === "pdfDownloaded") {
-            setDownloaded(true);
+        try {
+            const response = await downloadPdfFromS3(uniqueId);
+            if (response === "pdfNotReady") {
+                setIsDownloading(false);
+                setUniqueIdError(errors.process.downloadForm.pdfNotReady);
+                return;
+            } else if (response === "pdfNotFound") {
+                setIsDownloading(false);
+                setUniqueIdError(errors.process.downloadForm.nonExistentUniqueId);
+                return;
+            } else if (response === "pdfDownloaded") {
+                setDownloaded(true);
+            }
+        }
+        catch (error) {
+            console.error('Error downloading:', error);
         }
 
         setIsDownloading(false);

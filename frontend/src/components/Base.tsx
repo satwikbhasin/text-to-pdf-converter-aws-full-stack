@@ -1,6 +1,5 @@
 import React, { useState, lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import "../styles/base.css";
 
 const UploadForm = lazy(() => import('./UploadFrom'));
 const DownloadForm = lazy(() => import('./DownloadForm'));

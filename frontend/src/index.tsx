@@ -4,6 +4,7 @@ import './tailwind.css';
 import { BrowserRouter as Router } from 'react-router-dom';
 import Base from './components/Base';
 import Navbar from './components/Navbar';
+import './styles/globals.css';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
