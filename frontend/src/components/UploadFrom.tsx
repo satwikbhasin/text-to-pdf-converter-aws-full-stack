@@ -7,12 +7,7 @@ import errors from '../assets/validationErrors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
 import insertToDynamoDB from '../methods/insertToDynamoDB';
 
-interface UploadFormProps {
-    onSuccess: () => void;
-    onFailure: () => void;
-}
-
-const UploadForm: React.FC<UploadFormProps> = ({ onFailure, onSuccess }) => {
+const UploadForm: React.FC = () => {
     const [pdfName, setPdfName] = useState<string>('');
     const [textFile, setTextFile] = useState<File | null>(null);
     const [selectedFileBlob, setSelectedFileBlob] = useState<Blob | null>(null);
@@ -73,7 +68,6 @@ const UploadForm: React.FC<UploadFormProps> = ({ onFailure, onSuccess }) => {
         const fileUploadSuccess = await handleFileUpload();
 
         if (!fileUploadSuccess) {
-            onFailure();
             setIsSubmitting(false);
             return;
         }

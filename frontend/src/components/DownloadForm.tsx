@@ -4,12 +4,8 @@ import { Download, CheckCircle, ClipboardPaste, CircleDashed } from 'lucide-reac
 import errors from '../assets/validationErrors';
 import downloadPdfFromS3 from '../methods/downloadPdfFromS3';
 
-interface DownloadFormProps {
-    onSuccess: () => void;
-    onFailure: () => void;
-}
 
-const DownloadForm: React.FC<DownloadFormProps> = ({ onFailure, onSuccess }) => {
+const DownloadForm: React.FC = () => {
     const [uniqueId, setUniqueId] = useState<string>('');
     const [uniqueIdError, setUniqueIdError] = useState<string>('');
     const [isDownloading, setIsDownloading] = useState<boolean>(false);
