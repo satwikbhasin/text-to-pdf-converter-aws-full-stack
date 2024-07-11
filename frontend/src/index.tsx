@@ -2,8 +2,8 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './tailwind.css';
 import { BrowserRouter as Router } from 'react-router-dom';
-import Base from './components/Base';
-import Navbar from './components/Navbar';
+import Base from './components/main/Base';
+import Navbar from './components/main/Navbar';
 import './styles/globals.css';
 
 const root = ReactDOM.createRoot(

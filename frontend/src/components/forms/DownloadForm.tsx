@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { Download, CheckCircle, ClipboardPaste, CircleDashed } from 'lucide-react';
-import errors from '../assets/errors';
-import downloadPdfFromS3 from '../methods/downloadPdfFromS3';
-import ProcessError from './submissionResult/ProcessError';
+import { Download, CheckCircle, ClipboardPaste, CircleDashed, RefreshCwIcon } from 'lucide-react';
+import errors from '../../assets/errors';
+import downloadPdfFromS3 from '../../methods/downloadPdfFromS3';
+import ProcessError from '../common/ProcessError';
 
 
 const DownloadForm: React.FC = () => {
@@ -83,6 +83,14 @@ const DownloadForm: React.FC = () => {
         }
     };
 
+    const handleReset = () => {
+        setUniqueId('');
+        setUniqueIdError('');
+        setIsDownloading(false);
+        setDownloaded(false);
+        setDownloadError(false);
+    };
+
     return (
         <div>
             <h1 className="font-bold mb-6 text-gray-900 text-center">Enter your Unique Submission ID</h1>
@@ -141,7 +149,14 @@ const DownloadForm: React.FC = () => {
                     )}
                 </div>
             </form>
-            {downloadError && <ProcessError type="download" />}
+            <div className='flex items-center justify-center'>
+                {downloaded && (
+                    <button onClick={handleReset} className="ml-2 flex items-center justify-center p-2 rounded-full">
+                        Reset<RefreshCwIcon className="h-4 text-gray-900 spin-on-hover" />
+                    </button>
+                )}
+                {downloadError && <ProcessError type="download" />}
+            </div>
         </div>
     );
 }

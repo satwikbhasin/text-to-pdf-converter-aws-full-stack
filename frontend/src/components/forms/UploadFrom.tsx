@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { nanoid } from 'nanoid';
-import { Clipboard, ClipboardCheck, CheckCircle, Upload, CircleDashed } from 'lucide-react';
-import errors from '../assets/errors';
-import uploadFileToS3 from '../methods/uploadFileToS3';
-import insertToDynamoDB from '../methods/insertToDynamoDB';
-import ProcessError from './submissionResult/ProcessError';
+import { Clipboard, ClipboardCheck, CheckCircle, Upload, CircleDashed, RefreshCwIcon } from 'lucide-react';
+import errors from '../../assets/errors';
+import uploadFileToS3 from '../../methods/uploadFileToS3';
+import insertToDynamoDB from '../../methods/insertToDynamoDB';
+import ProcessError from '../common/ProcessError';
 
 const UploadForm: React.FC = () => {
     const [pdfName, setPdfName] = useState<string>('');
@@ -12,13 +12,13 @@ const UploadForm: React.FC = () => {
     const [selectedFileBlob, setSelectedFileBlob] = useState<Blob | null>(null);
     const [uniqueId, setUniqueId] = useState<string>('');
     const [copied, setCopied] = useState<boolean>(false);
-
-
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
     const [pdfNameError, setPdfNameError] = useState<string>('');
     const [textFileError, setTextFileError] = useState<string>('');
-    const [uploadError, setUploadError] =useState<boolean>(false);
+    const [uploadError, setUploadError] = useState<boolean>(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
 
     const validateForm = (): boolean => {
         let isValid = true;
@@ -100,6 +100,22 @@ const UploadForm: React.FC = () => {
         }
     };
 
+    const handleReset = () => {
+        setPdfName('');
+        setTextFile(null);
+        setSelectedFileBlob(null);
+        setUniqueId('');
+        setCopied(false);
+        setIsSubmitting(false);
+        setSubmissionSuccess(false);
+        setPdfNameError('');
+        setTextFileError('');
+        setUploadError(false);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
     return (
         <div>
             <h1 className="font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
@@ -129,6 +145,7 @@ const UploadForm: React.FC = () => {
                         type="file"
                         id="fileInput"
                         disabled={isSubmitting || submissionSuccess}
+                        ref={fileInputRef}
                         onChange={handleFileChange}
                         className={`overflow-hidden text-sm w-full border border-indigo-300 rounded-lg shadow-sm focus:ring focus:ring-indigo-500 focus:border-indigo-500 ${isSubmitting || submissionSuccess ? 'bg-gray-200 cursor-not-allowed' : ''}`}
                     />
@@ -148,7 +165,8 @@ const UploadForm: React.FC = () => {
                             className={`${submissionSuccess
                                 ? 'bg-gray-400 cursor-not-allowed'
                                 : 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600 hover:bg-gradient-to-br'
-                                } focus:ring-4 focus:ring-emerald-300 text-white font-medium rounded-lg px-5 py-2.5 text-sm flex items-center justify-center`}                        >
+                                } focus:ring-4 focus:ring-emerald-300 text-white font-medium rounded-lg px-5 py-2.5 text-sm flex items-center justify-center`}
+                        >
                             {submissionSuccess ? (
                                 <>
                                     <CheckCircle className="h-4 mr-1" />
@@ -178,7 +196,14 @@ const UploadForm: React.FC = () => {
                     )}
                 </div>
             </form>
-            {uploadError && <ProcessError type="upload" />}
+            <div className='flex items-center justify-center'>
+                {submissionSuccess && (
+                    <button onClick={handleReset} className="ml-2 flex items-center justify-center p-2 rounded-full">
+                        Reset<RefreshCwIcon className="h-4 text-gray-900 spin-on-hover" />
+                    </button>
+                )}
+                {uploadError && <ProcessError type="upload" />}
+            </div>
         </div>
     );
 }

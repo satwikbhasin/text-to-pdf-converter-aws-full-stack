@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import { Route, Routes } from 'react-router-dom';
-const UploadForm = lazy(() => import('./UploadFrom'));
-const DownloadForm = lazy(() => import('./DownloadForm'));
+const UploadForm = lazy(() => import('../forms/UploadFrom'));
+const DownloadForm = lazy(() => import('../forms/DownloadForm'));
 
 const Base: React.FC = () => {
   return (
