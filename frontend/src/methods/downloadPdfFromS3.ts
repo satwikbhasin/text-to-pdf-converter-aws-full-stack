@@ -1,5 +1,4 @@
 import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
-import Cookies from "js-cookie";
 import { saveAs } from "file-saver";
 import checkPdfStatus from "./checkPdfStatus";
 
@@ -25,6 +24,7 @@ const getSignedS3Url = async (
 
 const downloadPdfFromS3 = async (uniqueId: string): Promise<String | void> => {
   const pdfStatus = await checkPdfStatus(uniqueId);
+  
   if (pdfStatus.status === "pdfNotReady") {
     return "pdfNotReady";
   } else if (pdfStatus.status === "pdfNotFound") {
@@ -41,7 +41,7 @@ const downloadPdfFromS3 = async (uniqueId: string): Promise<String | void> => {
     }
 
     const blob = await response.blob();
-    const fileName = Cookies.get("pdfNameForTextToPDF") + ".pdf";
+    const fileName = pdfStatus.pdfName + ".pdf";
     saveAs(blob, fileName);
 
     return "pdfDownloaded";

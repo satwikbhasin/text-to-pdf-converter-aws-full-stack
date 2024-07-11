@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Download, CheckCircle, ClipboardPaste, CircleDashed } from 'lucide-react';
-
-import errors from '../assets/validationErrors';
+import errors from '../assets/errors';
 import downloadPdfFromS3 from '../methods/downloadPdfFromS3';
+import ProcessError from './submissionResult/ProcessError';
 
 
 const DownloadForm: React.FC = () => {
@@ -10,6 +10,8 @@ const DownloadForm: React.FC = () => {
     const [uniqueIdError, setUniqueIdError] = useState<string>('');
     const [isDownloading, setIsDownloading] = useState<boolean>(false);
     const [downloaded, setDownloaded] = useState<boolean>(false);
+    const [downloadError, setDownloadError] = useState<boolean>(false);
+
 
     const validateForm = (): boolean => {
         let isValid = true;
@@ -26,6 +28,26 @@ const DownloadForm: React.FC = () => {
         return isValid;
     };
 
+    const handleFileDownload = async (): Promise<boolean> => {
+        try {
+            const response = await downloadPdfFromS3(uniqueId);
+            if (response === "pdfNotReady") {
+                setIsDownloading(false);
+                setUniqueIdError(errors.process.download.pdfNotReady);
+            } else if (response === "pdfNotFound") {
+                setIsDownloading(false);
+                setUniqueIdError(errors.process.download.nonExistentUniqueId);
+            } else if (response === "pdfDownloaded") {
+                setDownloaded(true);
+            }
+            return true;
+        }
+        catch (error) {
+            console.error('Error downloading:', error);
+            return false;
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsDownloading(true);
@@ -35,22 +57,11 @@ const DownloadForm: React.FC = () => {
             return;
         }
 
-        try {
-            const response = await downloadPdfFromS3(uniqueId);
-            if (response === "pdfNotReady") {
-                setIsDownloading(false);
-                setUniqueIdError(errors.process.downloadForm.pdfNotReady);
-                return;
-            } else if (response === "pdfNotFound") {
-                setIsDownloading(false);
-                setUniqueIdError(errors.process.downloadForm.nonExistentUniqueId);
-                return;
-            } else if (response === "pdfDownloaded") {
-                setDownloaded(true);
-            }
-        }
-        catch (error) {
-            console.error('Error downloading:', error);
+        const processValid = await handleFileDownload();
+
+        if (!processValid) {
+            setIsDownloading(false);
+            setDownloadError(true);
         }
 
         setIsDownloading(false);
@@ -130,6 +141,7 @@ const DownloadForm: React.FC = () => {
                     )}
                 </div>
             </form>
+            {downloadError && <ProcessError type="download" />}
         </div>
     );
 }

@@ -11,10 +11,14 @@ const errors = {
     },
   },
   process: {
-    downloadForm: {
+    download: {
       nonExistentUniqueId:
         "The Unique ID does not exist! Please enter a valid Unique ID.",
       pdfNotReady: "The PDF is not ready yet! Please try again later.",
+      downloadFailure: "Failed to download PDF! Please try again later.",
+    },
+    upload: {
+      uploadFailure: "Failed to upload file! Please try again later.",
     },
   },
 };

@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Clipboard, ClipboardCheck, CheckCircle, Upload, CircleDashed } from 'lucide-react';
-import Cookies from 'js-cookie';
-
-import errors from '../assets/validationErrors';
+import errors from '../assets/errors';
 import uploadFileToS3 from '../methods/uploadFileToS3';
 import insertToDynamoDB from '../methods/insertToDynamoDB';
-import '../styles/uploadForm.css';
+import ProcessError from './submissionResult/ProcessError';
 
 const UploadForm: React.FC = () => {
     const [pdfName, setPdfName] = useState<string>('');
@@ -20,6 +18,7 @@ const UploadForm: React.FC = () => {
     const [submissionSuccess, setSubmissionSuccess] = useState(false);
     const [pdfNameError, setPdfNameError] = useState<string>('');
     const [textFileError, setTextFileError] = useState<string>('');
+    const [uploadError, setUploadError] =useState<boolean>(false);
 
     const validateForm = (): boolean => {
         let isValid = true;
@@ -46,8 +45,6 @@ const UploadForm: React.FC = () => {
         try {
             const uniqueId = nanoid();
             setUniqueId(uniqueId);
-            Cookies.set('uniqueIdForTextToPDF', uniqueId);
-            Cookies.set('pdfNameForTextToPDF', pdfName);
             const s3Path = await uploadFileToS3(textFile!, selectedFileBlob!, uniqueId);
             await insertToDynamoDB(pdfName, s3Path!, uniqueId);
             return true;
@@ -70,6 +67,7 @@ const UploadForm: React.FC = () => {
 
         if (!fileUploadSuccess) {
             setIsSubmitting(false);
+            setUploadError(true);
             return;
         }
 
@@ -104,10 +102,10 @@ const UploadForm: React.FC = () => {
 
     return (
         <div>
-            <h1 className="body font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
+            <h1 className="font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
             <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid gap-2">
-                    <label htmlFor="inputText" className="font-medium text-gray-700 text-md">
+                    <label htmlFor="pdfName" className="font-medium text-gray-700 text-md">
                         PDF Name
                     </label>
                     <input
@@ -180,6 +178,7 @@ const UploadForm: React.FC = () => {
                     )}
                 </div>
             </form>
+            {uploadError && <ProcessError type="upload" />}
         </div>
     );
 }

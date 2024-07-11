@@ -1,6 +1,5 @@
 import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
 
-// Function to get a signed URL for uploading to S3
 const getSignedS3Url = async (uniqueId: string): Promise<string> => {
   const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${encodeURIComponent(
     uniqueId
@@ -18,7 +17,6 @@ const getSignedS3Url = async (uniqueId: string): Promise<string> => {
   return uploadURL;
 };
 
-// Function to upload a file to S3 using the signed URL
 const uploadFile = async (uploadURL: string, fileBlob: Blob): Promise<void> => {
   const response = await fetch(uploadURL, {
     method: "PUT",
