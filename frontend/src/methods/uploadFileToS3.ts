@@ -4,18 +4,13 @@ const getSignedS3Url = async (uniqueId: string): Promise<string> => {
   const s3Path = encodeURIComponent(`${uniqueId}/input.txt`);
   const requesturl = `${baseUrl}?s3_path=${s3Path}&fileType=text/plain`;
 
-  console.log("requesturl", requesturl);
-
   const response = await fetch(requesturl!, {
     method: "GET",
   });
 
-  console.log("response", response);
-
   if (!response.ok) throw new Error("Failed to fetch upload URL");
 
   const { uploadURL } = await response.json();
-  console.log("uploadURL", uploadURL);
   return uploadURL;
 };
 
