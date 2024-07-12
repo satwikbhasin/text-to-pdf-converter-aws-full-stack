@@ -4,18 +4,10 @@ interface PdfStatus {
 }
 
 const checkPdfStatus = async (uniqueId: string): Promise<PdfStatus> => {
-  const requestUrl = `${process.env.REACT_APP_MANAGE_USER_SUBMISSIONS_TABLE_API_ENDPOINT}/${uniqueId}`;
-  
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  const apiKey = process.env.REACT_APP_API_ACCESS_KEY;
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
-  }
+  const requestUrl = `${process.env.REACT_APP_MANAGE_USER_SUBMISSIONS_TABLE_API_PROXY}/${uniqueId}`;
+
   const response = await fetch(requestUrl!, {
     method: "GET",
-    headers,
   });
 
   if (response.status === 404) {

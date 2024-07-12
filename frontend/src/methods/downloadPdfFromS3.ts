@@ -5,17 +5,10 @@ const getSignedS3Url = async (
   uniqueId: string,
   pdfFileName: string
 ): Promise<string> => {
-  const requesturl = `${process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${uniqueId}/${pdfFileName}.pdf&type=download`;
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-  };
-  const apiKey = process.env.REACT_APP_API_ACCESS_KEY;
-  if (apiKey) {
-    headers["x-api-key"] = apiKey;
-  }
+  const requesturl = `${process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_PROXY}?s3_path=${uniqueId}/${pdfFileName}.pdf&type=download`;
+
   const response = await fetch(requesturl!, {
     method: "GET",
-    headers,
   });
 
   if (!response.ok) {

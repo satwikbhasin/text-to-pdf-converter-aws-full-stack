@@ -79,6 +79,7 @@ const UploadForm: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setPdfName(e.target.value);
         if (pdfNameError) setPdfNameError('');
+        setUploadError(false);
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +87,7 @@ const UploadForm: React.FC = () => {
             const file = e.target.files[0];
             setTextFile(file);
             setSelectedFileBlob(new Blob([e.target.files[0]]));
+            setUploadError(false);
         }
     };
 

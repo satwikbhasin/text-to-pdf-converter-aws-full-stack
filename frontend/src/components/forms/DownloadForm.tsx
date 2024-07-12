@@ -73,6 +73,7 @@ const DownloadForm: React.FC = () => {
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setUniqueId(e.target.value);
         if (uniqueIdError) setUniqueIdError('');
+        setDownloadError(false);
     };
 
     const handlePaste = async () => {
