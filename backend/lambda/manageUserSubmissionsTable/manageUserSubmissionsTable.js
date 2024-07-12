@@ -5,7 +5,7 @@ const client = new DynamoDBClient({});
 
 const dynamo = DynamoDBDocumentClient.from(client);
 
-const ALLOWED_METHODS = ['GET','PUT','OPTIONS']
+const ALLOWED_METHODS = ['GET', 'PUT', 'OPTIONS']
 
 exports.handler = async (event) => {
   const requestOrigin = event.headers.origin
@@ -69,12 +69,12 @@ exports.handler = async (event) => {
           })
         );
         body = body.Item;
-        
+
         if (!body) {
           statusCode = 404;
           body = { message: "Item not found" };
         }
-        
+
         break;
 
       default:

@@ -2,7 +2,6 @@ import * as cdk from "aws-cdk-lib";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as iam from "aws-cdk-lib/aws-iam";
 import * as path from "path";
-import { aws_dynamodb as dynamodb } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
 interface LambdaStackProps extends cdk.StackProps {
@@ -88,6 +87,15 @@ export class LambdaStack extends cdk.Stack {
           iam.ManagedPolicy.fromAwsManagedPolicyName("AmazonEC2FullAccess"),
         ],
       }
+    );
+
+    createVmAndRunScriptRole.addToPolicy(
+      new iam.PolicyStatement({
+        actions: ["secretsmanager:GetSecretValue"],
+        resources: [
+          `arn:aws:secretsmanager:${cdk.Aws.REGION}:${cdk.Aws.ACCOUNT_ID}:secret:/assets/api-data*`,
+        ],
+      })
     );
 
     const createVmAndRunScript = new lambda.Function(

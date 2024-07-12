@@ -1,7 +1,10 @@
 const { EC2Client, RunInstancesCommand } = require("@aws-sdk/client-ec2");
+const { GetSecretValueCommand, SecretsManagerClient } = require("@aws-sdk/client-secrets-manager");
 
 exports.handler = async (event) => {
     const ec2Client = new EC2Client({});
+    const secretsManagerClient = new SecretsManagerClient({});
+
     const instanceImageId = "ami-06c68f701d8090592";
     const instanceType = "t2.micro";
 
@@ -13,12 +16,22 @@ exports.handler = async (event) => {
                 const tableEntry = record.dynamodb.NewImage;
                 if (tableEntry.submitter.S === "user") {
                     const submissionId = tableEntry.id.S;
-                    var S3SignAPI = "https://2a9vriqi8d.execute-api.us-east-1.amazonaws.com/prod/";
+
+                    const secretName = "/assets/api-data";
+                    const secretValue = await secretsManagerClient.send(new GetSecretValueCommand({
+                        SecretId: secretName
+                    }));
+
+                    const secret = JSON.parse(secretValue.SecretString);
+                    const generateSignedS3UrlAPI = secret.generateSignedS3UrlAPI;
+                    const manageUserSubmissionsTableAPI = secret.manageUserSubmissionsTableAPI;
+                    const apiKey = secret.apiKey;
+
                     const user_data_script = `#!/bin/bash
         cd /home/ec2-user/
         
-        SIGNED_URL_API="${S3SignAPI}?type=download&s3_path=script.py"
-        response=$(curl -s $SIGNED_URL_API)
+        SIGNED_URL_API="${generateSignedS3UrlAPI}?type=download&s3_path=script.py"
+        response=$(curl -s -H "x-api-key: ${apiKey}" $SIGNED_URL_API)
         download_url=$(echo $response | jq -r '.downloadURL')
         curl -O "$download_url"       
         
@@ -26,7 +39,7 @@ exports.handler = async (event) => {
         pip3 install fpdf
 
         chmod +x /home/ec2-user/script.py
-        ./script.py ${submissionId}
+        ./script.py ${submissionId} ${generateSignedS3UrlAPI} ${manageUserSubmissionsTableAPI} ${apiKey}
         shutdown -h now
         `;
 

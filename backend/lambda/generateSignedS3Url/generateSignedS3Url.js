@@ -6,7 +6,7 @@ AWS.config.update({ region: process.env.AWS_REGION })
 const s3 = new AWS.S3()
 
 const URL_EXPIRATION_SECONDS = 30
-const ALLOWED_METHODS = ['GET','OPTIONS']
+const ALLOWED_METHODS = ['GET', 'OPTIONS']
 
 exports.handler = async (event) => {
   const requestOrigin = event.headers.origin

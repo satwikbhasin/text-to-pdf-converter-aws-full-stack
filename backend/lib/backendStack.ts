@@ -37,9 +37,9 @@ export class BackendStack extends cdk.Stack {
     });
 
     // Deploy scripts.py to S3 bucket
-    new s3deploy.BucketDeployment(this, "DeployScripts", {
+    new s3deploy.BucketDeployment(this, "DeployVmScript", {
       sources: [
-        s3deploy.Source.asset(path.join(__dirname, "../assets/script/deploy")),
+        s3deploy.Source.asset(path.join(__dirname, "../assets/VmScript")),
       ],
       destinationBucket: bucketStack.bucket,
     });
@@ -55,10 +55,9 @@ export class BackendStack extends cdk.Stack {
       description: "Endpoint for the manageUserSubmissionsTableApi",
     });
 
-    // Output the bucket name
-    new cdk.CfnOutput(this, "BucketName", {
-      value: bucketStack.bucket.bucketName,
-      description: "The name of the S3 Bucket user-files",
+    new cdk.CfnOutput(this, "API Key", {
+      value: allAPIs.apiKey,
+      description: "API Key for both API endpoints",
     });
   }
 }

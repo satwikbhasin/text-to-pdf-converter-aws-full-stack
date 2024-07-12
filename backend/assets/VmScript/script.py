@@ -5,22 +5,24 @@ import requests
 from fpdf import FPDF
 
 # Global variables for API endpoints
-DYNAMODB_API_ENDPOINT = "<DYNAMODB_API_ENDPOINT>"
-S3_API_ENDPOINT = "<S3_API_ENDPOINT>"
-BUCKET_NAME = "<BUCKET_NAME>"
+MANAGE_USER_SUBMISSIONS_TABLE_API = None
+GENERATE_SIGNED_S3_URL_API = None
+SUBMISSION_ID = None
+API_KEY = None
 
 
-def get_dynamodb_entry(submission_id):
+def get_dynamodb_entry():
     """Retrieve the DynamoDB entry using the submission ID."""
-    dynamoDB_URL = f"{DYNAMODB_API_ENDPOINT}/{submission_id}"
-    response = requests.get(dynamoDB_URL)
+    dynamoDB_URL = f"{MANAGE_USER_SUBMISSIONS_TABLE_API}/{SUBMISSION_ID}"
+    headers = {"x-api-key": API_KEY}
+    response = requests.get(dynamoDB_URL, headers=headers)
     response.raise_for_status()
     return response.json()
 
 
 def get_signed_s3_url(s3_path, type):
     """Get the signed URL for downloading/uploading the file from/to S3."""
-    GetS3SignedURL = f"{S3_API_ENDPOINT}"
+    GetS3SignedURL = f"{GENERATE_SIGNED_S3_URL_API}"
 
     if type == "download":
         params = {"type": "download", "s3_path": s3_path}
@@ -31,7 +33,8 @@ def get_signed_s3_url(s3_path, type):
             "fileType": "application/pdf",
         }
 
-    response = requests.get(GetS3SignedURL, params=params)
+    headers = {"x-api-key": API_KEY}
+    response = requests.get(GetS3SignedURL, headers=headers, params=params)
     response.raise_for_status()
 
     return (
@@ -72,11 +75,11 @@ def convert_to_pdf(input_path, output_path):
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=10)
-    
-        with open(input_path, 'r') as file:
+
+        with open(input_path, "r") as file:
             for line in file:
                 pdf.cell(200, 10, txt=line, ln=True)
-    
+
         pdf.output(output_path)
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -85,24 +88,25 @@ def convert_to_pdf(input_path, output_path):
 def insert_file_to_dynamodb(new_s3_path, dynamoDBSubmissionEntry):
     """Update the DynamoDB entry with the new S3 path."""
     try:
-        dynamoDB_URL = f"{DYNAMODB_API_ENDPOINT}"
+        dynamoDB_URL = f"{MANAGE_USER_SUBMISSIONS_TABLE_API}"
         data = {
             "id": dynamoDBSubmissionEntry.get("id"),
             "submitter": "server",
             "fileS3Path": new_s3_path,
             "pdfName": dynamoDBSubmissionEntry.get("pdfName"),
         }
-        response = requests.put(dynamoDB_URL, json=data)
+        headers = {"x-api-key": API_KEY}
+        response = requests.put(dynamoDB_URL, json=data, headers=headers)
         response.raise_for_status()
     except requests.exceptions.RequestException as e:
         print(f"An error occurred while updating DynamoDB: {e}")
 
 
-def process_submission(submission_id):
+def process_submission():
     """Main function to process the submission."""
     try:
         # Retrieve DynamoDB entry
-        dynamoDBSubmissionEntry = get_dynamodb_entry(submission_id)
+        dynamoDBSubmissionEntry = get_dynamodb_entry()
         s3_path = dynamoDBSubmissionEntry.get("fileS3Path")
         pdfName = dynamoDBSubmissionEntry.get("pdfName")
 
@@ -128,9 +132,13 @@ def process_submission(submission_id):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 5:
         print("Usage: script.py <submission_id>")
         sys.exit(1)
 
-    submission_id = sys.argv[1]
-    process_submission(submission_id)
+    SUBMISSION_ID = sys.argv[1]
+    GENERATE_SIGNED_S3_URL_API = sys.argv[2]
+    MANAGE_USER_SUBMISSIONS_TABLE_API = sys.argv[3]
+    API_KEY = sys.argv[4]
+
+    process_submission()

@@ -1,14 +1,21 @@
-import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
-
 const getSignedS3Url = async (uniqueId: string): Promise<string> => {
-  const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${encodeURIComponent(
-    uniqueId
-  )}/input.txt&fileType=text/plain`;
-  const response = await fetch(url, {
+  const baseUrl =
+    process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_ENDPOINT;
+  const s3Path = encodeURIComponent(`${uniqueId}/input.txt`);
+  const requesturl = `${baseUrl}?s3_path=${s3Path}&fileType=text/plain`;
+
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+
+  const apiKey = process.env.REACT_APP_API_ACCESS_KEY;
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+
+  const response = await fetch(requesturl!, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   if (!response.ok) throw new Error("Failed to fetch upload URL");
@@ -38,12 +45,10 @@ const uploadFileToS3 = async (
   if (!selectedFile) return null;
 
   try {
-
     const uploadURL = await getSignedS3Url(uniqueId);
     await uploadFile(uploadURL, selectedFileBlob!);
     const s3Path = new URL(uploadURL).pathname.substring(1);
     return s3Path;
-    
   } catch (error) {
     console.error("Error uploading file to S3:", error);
     return null;

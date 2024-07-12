@@ -1,4 +1,3 @@
-import { GENERATE_SIGNED_S3_URL_API_ENDPOINT } from "../assets/apiEndpoints";
 import { saveAs } from "file-saver";
 import checkPdfStatus from "./checkPdfStatus";
 
@@ -6,12 +5,17 @@ const getSignedS3Url = async (
   uniqueId: string,
   pdfFileName: string
 ): Promise<string> => {
-  const url = `${GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${uniqueId}/${pdfFileName}.pdf&type=download`;
-  const response = await fetch(url, {
+  const requesturl = `${process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_ENDPOINT}?s3_path=${uniqueId}/${pdfFileName}.pdf&type=download`;
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  const apiKey = process.env.REACT_APP_API_ACCESS_KEY;
+  if (apiKey) {
+    headers["x-api-key"] = apiKey;
+  }
+  const response = await fetch(requesturl!, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -24,7 +28,7 @@ const getSignedS3Url = async (
 
 const downloadPdfFromS3 = async (uniqueId: string): Promise<String | void> => {
   const pdfStatus = await checkPdfStatus(uniqueId);
-  
+
   if (pdfStatus.status === "pdfNotReady") {
     return "pdfNotReady";
   } else if (pdfStatus.status === "pdfNotFound") {

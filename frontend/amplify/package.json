@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "dependencies": {
+    "aws-serverless-express": "^3.4.0"
+  },
+  "devDependencies": {
+    "@types/aws-serverless-express": "^3.3.9"
+  }
+}
