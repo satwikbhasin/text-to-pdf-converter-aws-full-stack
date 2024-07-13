@@ -2,7 +2,7 @@
   "name": "aws-full-stack-demo-app-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://main.du0zlvfacbhap.amplifyapp.com",
+  "homepage": "https://main.d3fcjrh4xirwm0.amplifyapp.com/",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",

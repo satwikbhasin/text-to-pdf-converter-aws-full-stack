@@ -2,42 +2,44 @@
 
 ## Amplify Deployment Link
 
-[https://main.du0zlvfacbhap.amplifyapp.com
-](https://main.du0zlvfacbhap.amplifyapp.com)
+[https://main.d3fcjrh4xirwm0.amplifyapp.com](https://main.d3fcjrh4xirwm0.amplifyapp.com)
 
 ## Application Flow
 
 1. **User Interaction:**
+
    - User submits a text file through the frontend application.
 
 2. **Frontend Action:**
+
    - Frontend sends a request to a proxy Lambda function to obtain a signed S3 URL for uploading the file.
-     
    - Frontend uses the signed S3 URL to upload the user's file directly to an S3 bucket.
-     
    - Upon successful upload, a new entry is inserted into DynamoDB, containing metadata about the uploaded file.
 
 3. **DynamoDB Trigger:**
+
    - The DynamoDB entry triggers a Lambda function to execute.
 
 4. **Lambda Execution:**
+
    - The Lambda function initiates the creation of an EC2 instance.
 
 5. **EC2 Instance Action:**
+
    - The EC2 instance runs a script that converts the text file to PDF format.
    - Once converted, the PDF file is uploaded back to the same or a different S3 bucket.
    - DynamoDB entry updated with the new location and details of the converted PDF file.
 
 6. **User Interaction (Download):**
-    - The user can download the converted PDF file through the frontend application.
+   - The user can download the converted PDF file through the frontend application.
 
 This app utilizes AWS services like S3, API Gateway, DynamoDB, Lambda, and EC2 in a structured and efficient manner.
 
-***Note:** Make sure you have Node.js installed, we will be using `npm`*
+**\*Note:** Make sure you have Node.js installed, we will be using `npm`\*
 
 ## Backend Setup
 
-***Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS CLI using the root/IAM account you intend to deploy the CDK to*
+**\*Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS CLI using the root/IAM account you intend to deploy the CDK to\*
 
 - Navigate to the backend directory
 
@@ -46,6 +48,7 @@ This app utilizes AWS services like S3, API Gateway, DynamoDB, Lambda, and EC2 i
   ```
 
 - Install dependencies
+
   ```sh
   npm install
   ```
@@ -55,8 +58,9 @@ This app utilizes AWS services like S3, API Gateway, DynamoDB, Lambda, and EC2 i
   ```sh
   ./deploy.sh
   ```
+
   This deployment outputs the `API key` & `API endpoints` for `generateSignedS3UrlApi` & `manageUserSubmissionsTableApi`. Please note these down as you will need these for the frontend.
-  
+
   For more details on how **_deploy.sh_** works and its configuration, refer to the script explanation below.
 
 ## Frontend Setup
@@ -83,12 +87,12 @@ This app utilizes AWS services like S3, API Gateway, DynamoDB, Lambda, and EC2 i
 
   I've implemented a proxy Lambda function combination to securely handle API calls using the keys. If you opt not to use the proxy, remember to include your backend-generated
   API key as a header named `x-api-key` in your requests to the backend.
-  
+
 ## **deploy.sh** Script Explanation
 
 ### Overview
 
-The `deploy.sh` script automates the deployment and configuration of an AWS CDK stack named `BackendStack`. 
+The `deploy.sh` script automates the deployment and configuration of an AWS CDK stack named `BackendStack`.
 
 ### Script Breakdown
 
@@ -148,7 +152,6 @@ When the EC2 Instance is spinned off from the lambda, it is passed a user data s
 - **`download_file_from_s3()`**: Downloads file from S3 bucket using the signed URL
 
 - **`upload_file_to_s3()`**: Uploads file to S3 bucket using the signed URL
-  
 - **`convert_to_pdf()`**: Converts the downloaded text file to pdf
 
 - **`insert_file_to_dynamodb()`**: Updates the S3 path for the pdf and submitter entry as **"server"** for the current submission
