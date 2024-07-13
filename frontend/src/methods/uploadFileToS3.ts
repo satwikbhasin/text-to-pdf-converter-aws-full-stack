@@ -1,6 +1,5 @@
 const getSignedS3Url = async (uniqueId: string): Promise<string> => {
-  const baseUrl =
-    process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_PROXY;
+  const baseUrl = process.env.REACT_APP_GENERATE_SIGNED_S3_URL_API_PROXY;
   const s3Path = encodeURIComponent(`${uniqueId}/input.txt`);
   const requesturl = `${baseUrl}?s3_path=${s3Path}&fileType=text/plain`;
 
@@ -39,9 +38,8 @@ const uploadFileToS3 = async (
     await uploadFile(uploadURL, selectedFileBlob!);
     const s3Path = new URL(uploadURL).pathname.substring(1);
     return s3Path;
-  } catch (error) {
-    console.error("Error uploading file to S3:", error);
-    return null;
+  } catch (error: any) {
+    throw new Error(`Error uploading file to S3: ${error.message}`);
   }
 };
 
