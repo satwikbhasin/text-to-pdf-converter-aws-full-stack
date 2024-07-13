@@ -119,7 +119,7 @@ const UploadForm: React.FC = () => {
     };
 
     return (
-        <div>
+        <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h1 className="font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
             <form className="grid gap-3" onSubmit={handleSubmit}>
                 <div className="grid gap-2">
