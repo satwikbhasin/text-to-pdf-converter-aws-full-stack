@@ -1,10 +1,37 @@
-# aws-full-stack-demo-app
+# aws-full-stack-demo-app / text-to-pdf-converter
 
 ## Amplify Deployment Link
 
 [https://main.du0zlvfacbhap.amplifyapp.com
 ](https://main.du0zlvfacbhap.amplifyapp.com)
 
+## Application Flow
+
+1. **User Interaction:**
+   - User submits a text file through the frontend application.
+
+2. **Frontend Action:**
+   - Frontend sends a request to a proxy Lambda function to obtain a signed S3 URL for uploading the file.
+     
+   - Frontend uses the signed S3 URL to upload the user's file directly to an S3 bucket.
+     
+   - Upon successful upload, a new entry is inserted into DynamoDB, containing metadata about the uploaded file.
+
+3. **DynamoDB Trigger:**
+   - The DynamoDB entry triggers a Lambda function to execute.
+
+4. **Lambda Execution:**
+   - The Lambda function initiates the creation of an EC2 instance.
+
+5. **EC2 Instance Action:**
+   - The EC2 instance runs a script that converts the text file to PDF format.
+   - Once converted, the PDF file is uploaded back to the same or a different S3 bucket.
+   - DynamoDB entry updated with the new location and details of the converted PDF file.
+
+6. **User Interaction (Download):**
+    - The user can download the converted PDF file through the frontend application.
+
+This app utilizes AWS services like S3, API Gateway, DynamoDB, Lambda, and EC2 in a structured and efficient manner.
 
 ***Note:** Make sure you have Node.js installed, we will be using `npm`*
 
