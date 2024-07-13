@@ -5,6 +5,29 @@
 [https://main.du0zlvfacbhap.amplifyapp.com
 ](https://main.du0zlvfacbhap.amplifyapp.com)
 
+## Backend Setup
+
+**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS CLI using the root/IAM account you intend to deploy the CDK to
+
+- Navigate to the backend directory
+
+  ```sh
+  cd backend
+  ```
+
+- Install dependencies
+  ```sh
+  npm install
+  ```
+
+- Deploy the stack to CDK using my custom script named **_deploy.sh_**
+
+  ```sh
+  ./deploy.sh
+  ```
+
+  For more details on how **_deploy.sh_** works and its configuration, refer to the script explanation below.
+
 ## Frontend Setup
 
 ***Note:** Make sure you have Node.js installed, we will be using `npm`*
@@ -27,115 +50,80 @@
   npm start
   ```
 
-## Backend Setup
-
-**Note:** Before deploying with AWS CDK, ensure that `aws-cdk`, `awscli`, and `aws-sdk` are installed. Additionally, make sure you are logged into AWS CLI using the root user account you intend to deploy the CDK to
-
-- Navigate to the backend directory
-
-  ```sh
-  cd backend
-  ```
-
-- Deploy the stack to CDK using my custom script named **_deploy.sh_**
-
-  ```sh
-  ./deploy.sh
-  ```
-
-  For more details on how **_deploy.sh_** works and its configuration, refer to the script explanation below.
-
 ## **deploy.sh** Script Explanation
 
 ### Overview
 
-The `deploy.sh` script automates the deployment and configuration of an AWS CDK stack named `BackendStack`. It handles initial deployment, captures API endpoints and a bucket name from the deployed stack, updates local scripts and a Lambda function with these endpoints, and performs a final CDK deployment.
+The `deploy.sh` script automates the deployment and configuration of an AWS CDK stack named `BackendStack`. 
 
 ### Script Breakdown
 
-#### Initial CDK Deployment
-
-Deploy the BackendStack initially
+Specify the AWS region for your stack deployment.
 
 ```bash
-cdk deploy
+region="us-east-1"
 ```
 
-#### Capture API Endpoints and Bucket Name
-
-After deployment, retrieve outputs from the CloudFormation stack
+Generate the CloudFormation templates from your AWS CDK app.
 
 ```bash
-dynamodb_api_endpoint=$(aws cloudformation describe-stacks \
-                --stack-name BackendStack \
-                --query "Stacks[0].Outputs[?OutputKey=='DynamoDBAPIEndpoint'].OutputValue" \
-                --output text)
-
-s3_api_endpoint=$(aws cloudformation describe-stacks \
-                --stack-name BackendStack \
-                --query "Stacks[0].Outputs[?OutputKey=='S3APIEndpoint'].OutputValue" \
-                --output text)
-
-bucket_name=$(aws cloudformation describe-stacks \
-                --stack-name BackendStack \
-                --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" \
-                --output text)
+cdk synth
 ```
 
-#### Update Local Scripts
-
-Update **_script.py_** with necessary **_generateSignedS3UrlAPI_**, **_manageUserSubmissionsTableApi_** API endpoints and **_user-files_** bucket name
+Sets up necessary resources (S3, Lambda, DynamoDB, etc.) for the CDK environment.
 
 ```bash
-script_template="assets/script/template/script.py"
-script_output="assets/script/deploy/script.py"
-sed -e "s|<DYNAMODB_API_ENDPOINT>|${dynamodb_api_endpoint//\//\\/}|g; s|<S3_API_ENDPOINT>|${s3_api_endpoint//\//\\/}|g; s|<BUCKET_NAME>|${bucket_name//\//\\/}|g" $script_template > $script_output
+cdk bootstrap
 ```
 
-#### Update Lambda Function
-
-Update **createVm_and_runScript.js** Lambda function with the **_generateSignedS3UrlAPI_** endpoint
+Deploys the CloudFormation stack named `BackendStack` to your AWS account.
 
 ```bash
-createVm_and_runScript_lambda_template="lambda/createVm_and_runScript/template/createVm_and_runScript.js"
-createVm_and_runScript_lambda_updated="lambda/createVm_and_runScript/createVm_and_runScript.js"
-sed -e "s|<S3_SIGN_API>|${s3_api_endpoint//\//\\/}|g" $createVm_and_runScript_lambda_template > $createVm_and_runScript_lambda_updated
-```
-
-#### Final CDK Deployment
-
-Completes the deployment process for BackendStack, ensuring all configurations are applied.
-
-```bash
-cdk deploy
+cdk deploy BackendStack
 ```
 
 ## **script.py** Script Explanation
 
 ### Overview
 
-This script executes within an EC2 instance triggered by events with entryType **"input"** in DynamoDB
+This python script executes within an EC2 instance triggered by events with submitter entry as **"user"** in DynamoDB
 
 - Retrieves submission details from DynamoDB
-- Modifies and uploads files to S3
-- Updates DynamoDB with file paths and submission details
+- Downloads the file linked to submission from S3
+- Converts the txt file to pdf and uploads back to S3
+- Updates DynamoDB with updated s3 file path and submitter entry as **"server"**
 
-### Functions
+### Arguments
 
-- **`get_from_dynamodb_using_submission_id(submission_id)`**: Retrieves submission details from DynamoDB and downloads files from S3
-- **`modify_input_file(inputText, input_file_path)`**: Modifies input files and renames them as requested
+When the EC2 Instance is spinned off from the lambda, it is passed a user data script to execute. That script downloads this(script.py) scipt to the instance and executes it with following arguments
 
-- **`upload_to_s3(file_path)`**: Uploads files to S3 using signed URLs obtained from an API
+`MANAGE_USER_SUBMISSIONS_TABLE_API` => API endpoint for the manageUserSubmissionsTableApi
 
-- **`write_to_dynamodb(s3_path, submission_id, inputText)`**: Writes submission details back to DynamoDB
+`GENERATE_SIGNED_S3_URL_API` => API endpoint for the generateSignedS3UrlApi
 
-### Execution
+`SUBMISSION_ID` = Submission ID for which text file needs to be converted to PDF
 
-The script reads a `submissionId` from a file, processes the submission through the defined functions, and updates DynamoDB with the results
+`API_KEY` => API_KEY for both the API's mentioned above
+
+### Main Functions
+
+- **`get_dynamodb_entry()`**: Retrieves submission details from DynamoDB and downloads files from S3
+
+- **`get_signed_s3_url()`**: Gets signed URL from `generateSignedS3UrlApi` for uploading/downloading files using the `API_KEY`
+
+- **`download_file_from_s3()`**: Downloads file from S3 bucket using the signed URL
+
+- **`upload_file_to_s3()`**: Uploads file to S3 bucket using the signed URL
+  
+- **`convert_to_pdf()`**: Converts the downloaded text file to pdf
+
+- **`insert_file_to_dynamodb()`**: Updates the S3 path for the pdf and submitter entry as **"server"** for the current submission
+
+- **`process_submission()`**: Handles above functions in order
 
 ### Note
 
-The **entryType** attribute with a value of **"input"** in DynamoDB ensures that the EC2 instance is launched only when a user submits a file, not when the script itself performs operations. Conversely, when the script submits data, it marks the entry with **"output"** as the **entryType**. This differentiation clarifies that the EC2 instance is triggered specifically in response to user submissions, distinguishing it from automated script actions and avoiding an infinite loop.
+The **submitter** attribute with a value of **"user"** in DynamoDB ensures that the EC2 instance is launched only when a user submits a text file, not when the script itself performs operations. Conversely, when the script submits data, it marks the entry with **"server"** as the **submitter**. This differentiation clarifies that the EC2 instance is triggered specifically in response to user submissions, distinguishing it from automated script actions and avoiding an infinite loop.
 
 ## API's
 
@@ -146,26 +134,3 @@ The `generateSignedS3UrlApi` is attached to a lambda function named `generateSig
 ## `manageUserSubmissionsTableApi`
 
 The `manageUserSubmissionsTableApi` is attached to a lambda function named `manageUserSubmissionsTable` which is designed to manage submissions within a database table named `userSubmissionsTable`. This API allows operations such as creating new submissions, retrieving submission details, updating existing submissions.
-
-## How to download output file
-
-You can use the `generateSignedS3UrlAPI` to obtain a signed URL for downloading files from an S3 bucket. Here's how you can do it using Postman:
-
-- **Endpoint**: `https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/uploads`
-- **Method**: `GET`
-- **Parameters**:
-  - `type`: `"download"`
-  - `key`: Specify the filename/key of the file you want to download from S3
-  -
-
-### Usage Example
-
-In Postman or your preferred HTTP client, set up a GET request to the following endpoint
-
-`https://78xeq1omd9.execute-api.us-east-1.amazonaws.com/prod/uploads?type=download&key=output_h3Z3OxX5I6pG2NhabayP7~tester.txt`
-
-Replace `output_h3Z3OxX5I6pG2NhabayP7~tester.txt` with the actual filename/key of the file you want to download from your S3 bucket.
-
-### Note
-
-Simply open the signed URL in your browser to initiate the download of the specified file from S3. Ensure that you have appropriate permissions and that the `key` parameter matches an existing file in your S3 bucket.
