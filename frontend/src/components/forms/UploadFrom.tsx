@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { nanoid } from 'nanoid';
-import { Clipboard, ClipboardCheck, CheckCircle, Upload, CircleDashed, RefreshCwIcon } from 'lucide-react';
+import { Clipboard, ClipboardCheck, CheckCircle, Upload, CircleDashed, RefreshCwIcon, Info } from 'lucide-react';
 import errors from '../../assets/errors';
 import uploadFileToS3 from '../../methods/uploadFileToS3';
 import insertToDynamoDB from '../../methods/insertToDynamoDB';
@@ -17,6 +17,7 @@ const UploadForm: React.FC = () => {
     const [pdfNameError, setPdfNameError] = useState<string>('');
     const [textFileError, setTextFileError] = useState<string>('');
     const [uploadError, setUploadError] = useState<boolean>(false);
+    const [showInfoTooltip, setShowInfoTooltip] = useState<boolean>(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
 
@@ -118,6 +119,8 @@ const UploadForm: React.FC = () => {
         }
     };
 
+    const toggleInfoTooltip = () => setShowInfoTooltip(!showInfoTooltip);
+
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
             <h1 className="font-bold mb-6 text-gray-900 text-center">Specify the desired PDF name & Upload your text file</h1>
@@ -186,7 +189,31 @@ const UploadForm: React.FC = () => {
                 <div>
                     {submissionSuccess ? (
                         <div className="border border-indigo-500 flex justify-center items-center mt-2 grid gap-2 p-2 rounded-lg justify-center bg-gray-200 text-sm text-gray-900">
-                            <span className="flex font-bold items-center justify-center">Unique Submission ID</span>
+                            <span className="flex font-bold items-center justify-center">
+                                <span className="relative">
+                                    <Info
+                                        size={14}
+                                        className="mr-1 cursor-pointer"
+                                        onMouseEnter={toggleInfoTooltip}
+                                        onMouseLeave={toggleInfoTooltip}
+                                    />
+                                    {showInfoTooltip && (
+                                        <div
+                                            id="tooltip-dark"
+                                            role="tooltip"
+                                            className="absolute z-5 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm tooltip dark:bg-gray-700"
+                                            style={{ width: '200px' }}
+                                        >
+                                            <p className="text-xs">Use this Unique ID to retrieve PDF from the downloads tab</p>
+                                        </div>
+                                    )}
+                                </span>
+                                Unique Submission ID
+                            </span>
+                            <div id="tooltip-dark" role="tooltip" className="absolute z-10 invisible inline-block px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+                                <p className="text-xs">You can use this unique ID to retrieve your PDF later.</p>
+                                <div className="tooltip-arrow" data-popper-arrow></div>
+                            </div>
                             <span className="flex items-center justify-center">{uniqueId}
                                 <button onClick={copyToClipboard} className="" type='button'>
                                     {copied ? <ClipboardCheck className="h-4 text-emerald-500" /> : <Clipboard className="h-4 text-emerald-500" />}
