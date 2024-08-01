@@ -1,8 +1,8 @@
 # text-to-pdf-converter / aws-full-stack-demo-app
 
-## Amplify Deployment Link
+The text-to-PDF converter app lets users upload text files, converts them to PDF format using AWS services, and provides the PDFs for download. The app uses a serverless backend with S3 for storage, Lambda functions for processing, DynamoDB for metadata, and EC2 instances for conversion. 
 
-[https://main.d3fcjrh4xirwm0.amplifyapp.com](https://main.d3fcjrh4xirwm0.amplifyapp.com)
+Check it out [here](https://main.d3fcjrh4xirwm0.amplifyapp.com)
 
 ## Application Flow
 
